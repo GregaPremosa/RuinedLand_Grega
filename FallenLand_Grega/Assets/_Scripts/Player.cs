@@ -4,11 +4,13 @@ public class Player
 {
     private List<Unit> arrayUnits;
     private List<terrainBlock> spawnPositions;
+    private Race race;
 
     public Player() : base()
     {
         arrayUnits = new List<Unit>();
         spawnPositions = new List<terrainBlock>();
+        race = new Race();
     }
 
     //set
@@ -26,3 +28,4 @@ public class Player
     public List<terrainBlock> getSpawnPosition() { return spawnPositions; }
     public List<Unit> getArrayUnits() { return arrayUnits; }
 }
+

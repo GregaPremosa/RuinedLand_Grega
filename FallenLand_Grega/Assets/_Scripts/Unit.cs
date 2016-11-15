@@ -16,8 +16,13 @@ abstract public class Unit
     private int movement;
     private int currentMovement;
     private int size; //how many ground blocks unit takes - can be 1(1x1) or 2(2x2)
-    private int upgrade; //this integer holds which upgrade is unit (NEEDS UPDATE - implement how upgrade works for stats, models,effects)
     private bool rangedMode;
+
+    //these are needed for certain (passive) effects based on race, for stats modification from upgrades, for model spawning(all variables).
+    private int upgrade; //this integer holds which upgrade is unit (NEEDS UPDATE - implement how upgrade works for stats, models,effects)
+    private Race race; // set which race is unit
+    private int type; //type defines what Unit it is:Scout(0), Warrior(1), Archer(2), Mage(3), Chanter(4)
+
     private GameObject model;
     private Sprite modelImage; //every Unit also has unit, which is used it Map view
     List<Effect> passives; //we can later add these and they will take effects in battle(boost certain unit types, debuff enemies, special unit powers, etc.)
@@ -47,10 +52,14 @@ abstract public class Unit
         currentMovement = 0;
         //this doesnt changes
         size = 0;
+
+        race = new Race();
         upgrade = 0;
+        type = 0;
+
         passives = new List<Effect>();
         rangedMode = false;
-        model = new GameObject();
+        model = null;
     }
     //set
     //static values
@@ -63,6 +72,8 @@ abstract public class Unit
     public void setMovement(int newMovement) { movement = newMovement; }
     public void setSize(int newSize) { size = newSize; }
     public void setUpgrade(int newUpgrade) { upgrade = newUpgrade; }
+    public void setRace(string newRace) { race.setLabel(newRace); }
+    public void setType(int newType) { type = newType; }
     //current values
     public void setCurrentHealth(int newCurrentHealth) { currentHealth = newCurrentHealth; }
     public void setCurrentArmour(int newCurrentArmour) { currentArmour = newCurrentArmour; }
@@ -71,7 +82,7 @@ abstract public class Unit
     public void setCurrentInitiative(int newCurrentInitiative) { currentInitiative = newCurrentInitiative; }
     public void setCurrentMovement(int newCurrentMovement) { currentMovement = newCurrentMovement; }
     //models & images
-    public void setModel(GameObject newModel) { model = newModel; }
+    public void setModel(UnitRacesArray modelHolder) { model = GameObject.Instantiate(modelHolder.arrayBasedOnRace[race.getRaceIndex()].arrayBasedOnType[getType()].arrayBasedOnUpgrade[getUpgrade()]) as GameObject; }
     public void setSprite(Sprite newModelImage) { modelImage = newModelImage; }
     //get
     //static values
@@ -84,6 +95,8 @@ abstract public class Unit
     public int getMovement() { return movement; }
     public int getSize() { return size; }
     public int getUpgrade() { return upgrade; }
+    public Race getRace() { return race; }
+    public int getType() { return type; }
     //current values
     public int getCurrentHealth() { return currentHealth; }
     public int getCurrentArmour() { return currentArmour; }
@@ -94,6 +107,11 @@ abstract public class Unit
     //models & images
     public GameObject getModel() { return model; }
     public Sprite getSprite() { return modelImage; }
+    //add physical body of Unit on the board
+    public void spawnUnitModel(UnitRacesArray modelHolder)
+    {
+        model = GameObject.Instantiate( modelHolder.arrayBasedOnRace[race.getRaceIndex()].arrayBasedOnType[getType()].arrayBasedOnUpgrade[getUpgrade()] ) as GameObject;
+    }
     //prepare Units stats for start of battleMode
     public void prepareUnitStats()
     {
@@ -174,6 +192,8 @@ public class Warrior : Melee
 {
     public Warrior() : base()
     {
+        //type
+        setType(1);
         //basic stats
         setHealth(6);
         setArmour(35);
@@ -191,6 +211,8 @@ public class Scout : Melee
 {
     public Scout() : base()
     {
+        //type
+        setType(0);
         //basic stats
         setHealth(4);
         setArmour(15);
@@ -208,6 +230,8 @@ public class Chanter : Melee
 {
     public Chanter() : base()
     {
+        //type
+        setType(4);
         //basic stats
         setHealth(10);
         setArmour(20);
@@ -225,6 +249,8 @@ public class Archer : Ranged
 {
     public Archer() : base()
     {
+        //type
+        setType(2);
         //basic stats
         setHealth(6);
         setArmour(20);
@@ -242,6 +268,8 @@ public class Mage : Ranged
 {
     public Mage() : base()
     {
+        //type
+        setType(3);
         //basic stats
         setHealth(5);
         setArmour(15);
@@ -262,10 +290,12 @@ public class UnitUpgradeModels
     //by default we want maybe 1 possible upgrade per unit - so normal Unit and upgraded unit
     public List<GameObject> arrayBasedOnUpgrade;
     private string unitType;
+    private int numberOfUpgrades = 3; //we can set how many upgrades we allow each unit
     public UnitUpgradeModels() : base()
     {
         unitType = "";
         arrayBasedOnUpgrade = new List<GameObject>();
+        arrayBasedOnUpgrade.Capacity = numberOfUpgrades;
     }
     //set
     public void setNewUpgradeModel(GameObject newModel) { arrayBasedOnUpgrade.Add(newModel); }

@@ -32,6 +32,8 @@ public class terrainGenerator : MonoBehaviour
         //This is testing interaction for players
         Archer testArcher_1 = new Archer();
         Warrior testWarrior_1 = new Warrior();
+        testArcher_1.setModel(arrayModels);
+        //testWarrior_1.spawnUnitModel(arrayModels);
         player1.addUnit(testArcher_1);
         player2.addUnit(testWarrior_1);
     }
