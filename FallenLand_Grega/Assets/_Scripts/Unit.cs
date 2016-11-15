@@ -7,6 +7,8 @@ abstract public class Unit
     private int currentHealth;
     private int armour;
     private int currentArmour;
+    private int attack;
+    private int currentAttack;
     private int count;
     private int currentCount;
     private int initiative;
@@ -34,6 +36,8 @@ abstract public class Unit
         count = 0;
         currentCount = 0;
         //go through effects to change this
+        attack = 0;
+        currentAttack = 0;
         armour = 0; //armour is percentage based: from 0 to 100, it says reduction.
         currentArmour = 0;
         initiative = 0; //percentage based - from 1 to 100
@@ -49,6 +53,7 @@ abstract public class Unit
     //static values
     public void setHealth(int newHealth) { health = newHealth; }
     public void setArmour(int newArmour) { armour = newArmour; }
+    public void setAttack(int newAttack) { attack = newAttack; }
     public void setCount(int newCount) { count = newCount; }
     public void setInitiate(int newInitiative) { initiative = newInitiative; }
     public void setAttackMode(bool newRangedMode) { rangedMode = newRangedMode; }
@@ -57,6 +62,7 @@ abstract public class Unit
     //current values
     public void setCurrentHealth(int newCurrentHealth) { currentHealth = newCurrentHealth; }
     public void setCurrentArmour(int newCurrentArmour) { currentArmour = newCurrentArmour; }
+    public void setCurrentAttack(int newCurrentAttack) { currentAttack = newCurrentAttack; }
     public void setCurrentCount(int newCurrentCount) { currentCount = newCurrentCount; }
     public void setCurrentInitiative(int newCurrentInitiative) { currentInitiative = newCurrentInitiative; }
     public void setCurrentMovement(int newCurrentMovement) { currentMovement = newCurrentMovement; }
@@ -67,6 +73,7 @@ abstract public class Unit
     //static values
     public int getHealth() { return health; }
     public int getArmour() { return armour; }
+    public int getAttack() { return attack; }
     public int getCount() { return count; }
     public int getInitiate() { return initiative; }
     public bool getAttackMode() { return rangedMode; }
@@ -74,13 +81,24 @@ abstract public class Unit
     public int getSize() { return size; }
     //current values
     public int getCurrentHealth() { return currentHealth; }
-    public int getcurrentArmour() { return currentArmour; }
+    public int getCurrentArmour() { return currentArmour; }
+    public int getCurrentAttack() { return currentAttack; }
     public int getCurrentCount() { return currentCount; }
     public int getCurrentInitiate() { return currentInitiative; }
     public int getCurrentMovement() { return currentMovement; }
     //models & images
     public GameObject getModel() { return model; }
     public Sprite getSprite() { return modelImage; }
+    //prepare Units stats for start of battle
+    public void prepareUnitStats()
+    {
+        currentHealth = health;
+        currentArmour = armour;
+        currentAttack = attack;
+        currentInitiative = initiative;
+        currentMovement = movement;
+        currentCount = count;
+    }
     //taking damage
     public void takeDamage(int damage)
     {
@@ -138,6 +156,7 @@ public class Warrior : Melee
         //basic stats
         setHealth(6);
         setArmour(35);
+        setAttack(6);
         setInitiate(10);
         setMovement(4);
         //melee exclusive
@@ -154,6 +173,7 @@ public class Scout : Melee
         //basic stats
         setHealth(4);
         setArmour(15);
+        setAttack(2);
         setInitiate(90);
         setMovement(7);
         //melee exclusive
@@ -170,6 +190,7 @@ public class Chanter : Melee
         //basic stats
         setHealth(10);
         setArmour(20);
+        setAttack(3);
         setInitiate(20);
         setMovement(3);
         //melee exclusive
@@ -186,6 +207,7 @@ public class Archer : Ranged
         //basic stats
         setHealth(6);
         setArmour(20);
+        setAttack(3);
         setInitiate(50);
         setMovement(4);
         //ranged exlusive
@@ -202,6 +224,7 @@ public class Mage : Ranged
         //basic stats
         setHealth(5);
         setArmour(15);
+        setAttack(4);
         setInitiate(40);
         setMovement(2);
         //ranged exclusive
