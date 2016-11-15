@@ -16,6 +16,7 @@ abstract public class Unit
     private int movement;
     private int currentMovement;
     private int size; //how many ground blocks unit takes - can be 1(1x1) or 2(2x2)
+    private int upgrade; //this integer holds which upgrade is unit (NEEDS UPDATE - implement how upgrade works for stats, models,effects)
     private bool rangedMode;
     private GameObject model;
     private Sprite modelImage; //every Unit also has unit, which is used it Map view
@@ -46,6 +47,8 @@ abstract public class Unit
         currentMovement = 0;
         //this doesnt changes
         size = 0;
+        upgrade = 0;
+        passives = new List<Effect>();
         rangedMode = false;
         model = new GameObject();
     }
@@ -59,6 +62,7 @@ abstract public class Unit
     public void setAttackMode(bool newRangedMode) { rangedMode = newRangedMode; }
     public void setMovement(int newMovement) { movement = newMovement; }
     public void setSize(int newSize) { size = newSize; }
+    public void setUpgrade(int newUpgrade) { upgrade = newUpgrade; }
     //current values
     public void setCurrentHealth(int newCurrentHealth) { currentHealth = newCurrentHealth; }
     public void setCurrentArmour(int newCurrentArmour) { currentArmour = newCurrentArmour; }
@@ -79,6 +83,7 @@ abstract public class Unit
     public bool getAttackMode() { return rangedMode; }
     public int getMovement() { return movement; }
     public int getSize() { return size; }
+    public int getUpgrade() { return upgrade; }
     //current values
     public int getCurrentHealth() { return currentHealth; }
     public int getCurrentArmour() { return currentArmour; }
@@ -89,7 +94,7 @@ abstract public class Unit
     //models & images
     public GameObject getModel() { return model; }
     public Sprite getSprite() { return modelImage; }
-    //prepare Units stats for start of battle
+    //prepare Units stats for start of battleMode
     public void prepareUnitStats()
     {
         currentHealth = health;
@@ -99,7 +104,15 @@ abstract public class Unit
         currentMovement = movement;
         currentCount = count;
     }
-    //taking damage
+    //calculate damage - NOTE: here, you need to take in consideration base damage, effects and armour of enemy unit.
+    public void dealDamage(Unit enemyUnit)
+    {
+        currentAttack = attack;
+        applyEffects();
+        currentAttack = currentAttack - (currentAttack * enemyUnit.getArmour());
+        enemyUnit.takeDamage(currentAttack);
+    }
+    //taking damage - doesnt count armour yet
     public void takeDamage(int damage)
     {
         int damageCount = damage;
@@ -111,6 +124,14 @@ abstract public class Unit
                 currentHealth = health;
                 currentCount--;
             }
+        }
+    }
+    //iterate effects and apply to current stats
+    public void applyEffects()
+    {
+        for (int i = 0; i < passives.Count; i++)
+        {
+            passives[i].activate(this);
         }
     }
 }
@@ -235,10 +256,11 @@ public class Mage : Ranged
 }
 
 //for each unit TYPE we store here model of their upgrade: For example, Warrior has upgrade 1,2,3; we store those here. Archer is stored in another simular list, saved inside common array.
+[System.Serializable]
 public class UnitUpgradeModels
 {
     //by default we want maybe 1 possible upgrade per unit - so normal Unit and upgraded unit
-    private List<GameObject> arrayBasedOnUpgrade;
+    public List<GameObject> arrayBasedOnUpgrade;
     private string unitType;
     public UnitUpgradeModels() : base()
     {
@@ -252,12 +274,14 @@ public class UnitUpgradeModels
     public GameObject getUpgradeModel(int upgradeLevel) { return arrayBasedOnUpgrade[upgradeLevel]; }
     public string getUnitType() { return unitType; }
 }
+
+[System.Serializable]
 public class UnitTypeModels
 {
     private const int numberOfUnitTypes = 5; //this can be constant
     private string raceType;
     //default we can set size here - each race will have the SAME ammount of unit types - for current game development we can set it to 5(Warrior,Scout,Mage,Chanter,Archer).
-    private UnitUpgradeModels[] arrayBasedOnType;
+    public UnitUpgradeModels[] arrayBasedOnType;
     public UnitTypeModels() : base()
     {
         arrayBasedOnType = new UnitUpgradeModels[numberOfUnitTypes];
@@ -282,16 +306,22 @@ public class UnitTypeModels
 
 }
 
+[System.Serializable]
 public class UnitRacesArray
 {
-    public UnitTypeModels[] arrayBasedOnRase;
+    public UnitTypeModels[] arrayBasedOnRace;
     public UnitRacesArray() : base()
     {
         //by default, we set races here: Human, Elf, Dwarf, Orc.
-        arrayBasedOnRase = new UnitTypeModels[4];
-        arrayBasedOnRase[0].setRaceType("Human");
-        arrayBasedOnRase[1].setRaceType("Elf");
-        arrayBasedOnRase[2].setRaceType("Dwarf");
-        arrayBasedOnRase[3].setRaceType("Orc");
+        int numOfRaces = 4;
+        arrayBasedOnRace = new UnitTypeModels[numOfRaces];
+        for (int index = 0; index < numOfRaces; index++)
+        {
+            arrayBasedOnRace[index] = new UnitTypeModels();
+        }
+        arrayBasedOnRace[0].setRaceType("Human");
+        arrayBasedOnRace[1].setRaceType("Elf");
+        arrayBasedOnRace[2].setRaceType("Dwarf");
+        arrayBasedOnRace[3].setRaceType("Orc");
     }
 }

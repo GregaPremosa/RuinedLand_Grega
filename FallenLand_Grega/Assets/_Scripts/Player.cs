@@ -16,4 +16,13 @@ public class Player
     {
         spawnPositions.Add(newSpawnPos);
     }
+    public void addUnit(Unit unit)
+    {
+        arrayUnits.Add(unit);
+        int index = arrayUnits.IndexOf(unit);
+        spawnPositions[index].setOccupyingEntity( unit.getModel() );
+    }
+    //get whole list of spawnPositions
+    public List<terrainBlock> getSpawnPosition() { return spawnPositions; }
+    public List<Unit> getArrayUnits() { return arrayUnits; }
 }
