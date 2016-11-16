@@ -2,12 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[System.Serializable]
-public class myArray
-{
-    public GameObject[] tmp;
-}
-
 public class terrainGenerator : MonoBehaviour
 {
     public GameObject[] prefabArray; //this has corresponding elements as state for blocks(whether it can be occupied, is a spawn or is an obstacle)
@@ -29,12 +23,18 @@ public class terrainGenerator : MonoBehaviour
         newBattleMode.generateBlocks();
         newBattleMode.setPlayers(player1,player2); //we set players
         newBattleMode.setOccupyingEntities(obstacleObjectArray);
-        //This is testing interaction for players
+        //This is testing interaction for players - TESTING FACILITY, STATIC IS ONLY TEMPORARY
         Archer testArcher_1 = new Archer();
+        Archer testArcher_2 = new Archer();
+        Archer testArcher_3 = new Archer();
         Warrior testWarrior_1 = new Warrior();
         testArcher_1.setModel(arrayModels);
-        //testWarrior_1.spawnUnitModel(arrayModels);
+        testArcher_2.setModel(arrayModels);
+        testArcher_3.setModel(arrayModels);
+        testWarrior_1.setModel(arrayModels);
         player1.addUnit(testArcher_1);
+        player1.addUnit(testArcher_2);
+        player1.addUnit(testArcher_3);
         player2.addUnit(testWarrior_1);
     }
 }
@@ -245,4 +245,74 @@ public class obstacleArray
     //get
     public int getRow() { return rowNumber; }
     public int getColumn() { return columnNumber; }
+}
+
+public class GameLogic
+{
+    private List<Unit> priorityQueue;
+    public GameLogic() : base()
+    {
+        priorityQueue = null;
+    }
+
+    public void gameRuntime(Player player1, Player player2, List<Effect> passives)
+    {
+        //instanciate new priorityQeue
+        priorityQueue = new List<Unit>();
+        while (player1.getAlive() == true || player2.getAlive())
+        {
+            //first go through player 1 units and put them in priorityQueue
+            for (int index = 0; index < player1.getArrayUnits().Count; index++)
+            {
+                priorityQueue.Add(player1.getArrayUnits()[index]);
+            }
+            //now go into player 2 units and put them in priorityQueue
+            for (int index = 0; index < player2.getArrayUnits().Count; index++)
+            {
+                priorityQueue.Add(player2.getArrayUnits()[index]);
+            }
+            //for each unit set current stats now and check their effects, passives, etc
+            for (int index = 0; index < priorityQueue.Count; index++)
+            {
+                priorityQueue[index].prepareUnitStats();
+                priorityQueue[index].applyEffects();
+            }
+            //sort Units in order of currentPriority first, then by LOWER currentAttack, then by HIGHER currentDefense, then whichever is first in queue is sooner
+            //we have 8 elements max (or maybe something like 20 if we expand the game so more Units can be placed - literaly any sorting algorithm works here)
+            //We can just go with BubbleSort - very fast and easy implementation
+            for (int i = 0; i < priorityQueue.Count; i++)
+            {
+                for (int j = 0; j < (priorityQueue.Count - 1); j++)
+                {
+                    //firstly sort by currentInitiative - higher to left
+                    if (priorityQueue[j].getCurrentInitiate() < priorityQueue[j + 1].getCurrentInitiate())
+                    {
+                        Unit tmp;
+                        tmp = priorityQueue[j];
+                        priorityQueue[j] = priorityQueue[j + 1];
+                        priorityQueue[j + 1] = priorityQueue[j];
+                    }
+                    //secondly sort by currentAttack - lower to left
+                    else if (priorityQueue[j].getCurrentAttack() > priorityQueue[j + 1].getCurrentAttack())
+                    {
+                        Unit tmp;
+                        tmp = priorityQueue[j];
+                        priorityQueue[j] = priorityQueue[j + 1];
+                        priorityQueue[j + 1] = priorityQueue[j];
+                    }
+                    //lastly sort by currentArmour - higher to left
+                    else if (priorityQueue[j].getCurrentArmour() < priorityQueue[j + 1].getCurrentArmour())
+                    {
+                        Unit tmp;
+                        tmp = priorityQueue[j];
+                        priorityQueue[j] = priorityQueue[j + 1];
+                        priorityQueue[j + 1] = priorityQueue[j];
+                    }
+                    //otherwise, we dont really care which is before, since these 3 stats are the most important
+                }
+            }
+            //give Units control to move, attack, defend, etc now
+            //update information of Unit count, delete Units from player arrays if they die, update effects,...
+        }
+    }
 }

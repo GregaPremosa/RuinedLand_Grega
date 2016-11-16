@@ -59,7 +59,7 @@ abstract public class Unit
 
         passives = new List<Effect>();
         rangedMode = false;
-        model = null;
+        //model = null;
     }
     //set
     //static values
@@ -82,7 +82,10 @@ abstract public class Unit
     public void setCurrentInitiative(int newCurrentInitiative) { currentInitiative = newCurrentInitiative; }
     public void setCurrentMovement(int newCurrentMovement) { currentMovement = newCurrentMovement; }
     //models & images
-    public void setModel(UnitRacesArray modelHolder) { model = GameObject.Instantiate(modelHolder.arrayBasedOnRace[race.getRaceIndex()].arrayBasedOnType[getType()].arrayBasedOnUpgrade[getUpgrade()]) as GameObject; }
+    public void setModel(UnitRacesArray modelHolder)
+    {
+        model = modelHolder.arrayBasedOnRace[race.getRaceIndex()].arrayBasedOnType[getType()].arrayBasedOnUpgrade[getUpgrade()];
+    }
     public void setSprite(Sprite newModelImage) { modelImage = newModelImage; }
     //get
     //static values
@@ -107,12 +110,8 @@ abstract public class Unit
     //models & images
     public GameObject getModel() { return model; }
     public Sprite getSprite() { return modelImage; }
-    //add physical body of Unit on the board
-    public void spawnUnitModel(UnitRacesArray modelHolder)
-    {
-        model = GameObject.Instantiate( modelHolder.arrayBasedOnRace[race.getRaceIndex()].arrayBasedOnType[getType()].arrayBasedOnUpgrade[getUpgrade()] ) as GameObject;
-    }
-    //prepare Units stats for start of battleMode
+
+    //prepare Units stats for start battleMode
     public void prepareUnitStats()
     {
         currentHealth = health;
@@ -288,17 +287,15 @@ public class Mage : Ranged
 public class UnitUpgradeModels
 {
     //by default we want maybe 1 possible upgrade per unit - so normal Unit and upgraded unit
-    public List<GameObject> arrayBasedOnUpgrade;
-    private string unitType;
     private int numberOfUpgrades = 3; //we can set how many upgrades we allow each unit
+    public GameObject[] arrayBasedOnUpgrade;
+    private string unitType;
     public UnitUpgradeModels() : base()
     {
         unitType = "";
-        arrayBasedOnUpgrade = new List<GameObject>();
-        arrayBasedOnUpgrade.Capacity = numberOfUpgrades;
+        arrayBasedOnUpgrade = new GameObject[numberOfUpgrades];
     }
     //set
-    public void setNewUpgradeModel(GameObject newModel) { arrayBasedOnUpgrade.Add(newModel); }
     public void setUnitType(string newUnitType) { unitType = newUnitType; }
     //get
     public GameObject getUpgradeModel(int upgradeLevel) { return arrayBasedOnUpgrade[upgradeLevel]; }
@@ -333,7 +330,6 @@ public class UnitTypeModels
     //get
     public string getRaceType() { return raceType; }
     public UnitUpgradeModels getUnitUpgradeModel(int index) { return arrayBasedOnType[index]; }
-
 }
 
 [System.Serializable]
