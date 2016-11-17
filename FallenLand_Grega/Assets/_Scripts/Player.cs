@@ -25,6 +25,8 @@ public class Player
     {
         arrayUnits.Add(unit);
         int index = arrayUnits.IndexOf(unit);
+        unit.setColPos( spawnPositions[index].getColumn() );
+        unit.setRowPos( spawnPositions[index].getRow() );
         spawnPositions[index].setOccupyingEntity( unit.getModel() );
     }
     //get whole list of spawnPositions
@@ -41,5 +43,7 @@ public class Player
             alive = false;
         }
     }
+    //when we have a working priority queue we can delete set method - it is just so we can manually test alive state(it works auto with function above)
+    public void setAlive(bool newalive) { alive = newalive; }
 }
 

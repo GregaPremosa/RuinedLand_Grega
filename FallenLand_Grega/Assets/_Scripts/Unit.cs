@@ -3,6 +3,10 @@ using System.Collections.Generic;
 //Unified - version 1
 abstract public class Unit
 {
+    //position on matrix
+    private int rowPos;
+    private int colPos;
+
     private int health;
     private int currentHealth;
     private int armour;
@@ -36,6 +40,8 @@ abstract public class Unit
 
     public Unit() : base()
     {
+        colPos = -1;
+        rowPos = -1;
         //changes while taking damage
         health = 0;
         currentHealth = 0;
@@ -84,7 +90,7 @@ abstract public class Unit
     //models & images
     public void setModel(UnitRacesArray modelHolder)
     {
-        model = modelHolder.arrayBasedOnRace[race.getRaceIndex()].arrayBasedOnType[getType()].arrayBasedOnUpgrade[getUpgrade()];
+        model = GameObject.Instantiate(modelHolder.arrayBasedOnRace[race.getRaceIndex()].arrayBasedOnType[getType()].arrayBasedOnUpgrade[getUpgrade()]) as GameObject;
     }
     public void setSprite(Sprite newModelImage) { modelImage = newModelImage; }
     //get
@@ -151,6 +157,11 @@ abstract public class Unit
             passives[i].activate(this);
         }
     }
+    //for location on matrix
+    public int getRowPos() { return rowPos; }
+    public int getColPos() { return colPos; }
+    public void setRowPos(int newPosRow) { rowPos = newPosRow; }
+    public void setColPos(int newPosCol) { colPos = newPosCol; }
 }
 //Melee - Subclass of Unit
 abstract public class Melee : Unit
@@ -198,7 +209,7 @@ public class Warrior : Melee
         setArmour(35);
         setAttack(6);
         setInitiate(10);
-        setMovement(4);
+        setMovement(3);
         //melee exclusive
         setAttackRange(1);
         setSize(1);
