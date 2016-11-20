@@ -272,6 +272,7 @@ public class GameLogic: MonoBehaviour
     //we set these 2 values from terrain Start() function.
     private terrain terrainGenerator;
     private GameObject movementIndicator;
+    private List<GameObject> arrayOfMovementIndicators;
 
     //set this from terrain terrainGenerator
     private Player player1;
@@ -284,6 +285,7 @@ public class GameLogic: MonoBehaviour
         terrainGenerator = null;
         player1 = null;
         player2 = null;
+        arrayOfMovementIndicators = new List<GameObject>();
     }
 
     public void setPlayer1(Player newPlayer1) { player1 = newPlayer1; }
@@ -395,6 +397,7 @@ public class GameLogic: MonoBehaviour
                 //check which Unit was is on bottom index
                 Debug.Log("Unit: " + priorityQueue[0].getModel());
                 priorityQueue.RemoveAt(0);
+                deleteMovementArea();
             }
         }
         if (player1.getAlive() && player2.getAlive() && priorityQueue.Count == 0)
@@ -408,7 +411,6 @@ public class GameLogic: MonoBehaviour
     public void generateMovementArea( terrain BM_terrain)
     {
         int movementSize = priorityQueue[0].getCurrentMovement();
-        //Debug.Log("GAMELOGIC - matrixField model");
         int Rowpos = priorityQueue[0].getRowPos();
         int Colpos = priorityQueue[0].getColPos();
         Debug.Log("row of unit: " + Rowpos);
@@ -434,29 +436,25 @@ public class GameLogic: MonoBehaviour
             if (index_row_topLimit < mostTop) { index_row_topLimit = mostTop; }
             int index_row_botLimit = Rowpos + (movementSize - Mathf.Abs(index_col - Colpos));
             if (index_row_botLimit > mostBot) { index_row_botLimit = mostBot; }
-            for (int index_row = index_row_topLimit; index_row < index_row_botLimit; index_row++)
+            for (int index_row = index_row_topLimit; index_row <= index_row_botLimit; index_row++)
             {
                 if (BM_terrain.getMatrixField()[index_row][index_col].getOccupyingEntity() == null)
                 {
                     GameObject newIndicator = GameObject.Instantiate(movementIndicator) as GameObject;
+                    arrayOfMovementIndicators.Add(newIndicator);
                     BM_terrain.getMatrixField()[index_row][index_col].setOccupyingEntity(newIndicator);
                 }
             }
         }
     }
     //after unit is deselected, release all movement areas he was to taking
-    public void deleteMovementArea( terrain BM_terrain )
+    public void deleteMovementArea()
     {
-        int movementSize = priorityQueue[0].getCurrentMovement();
-        int rowPos = priorityQueue[0].getRowPos();
-        int colPos = priorityQueue[0].getColPos();
-        for (int i = rowPos - movementSize; i < rowPos + movementSize; i++)
+        for (int index = 0; index < arrayOfMovementIndicators.Count; index++)
         {
-            for (int j = colPos - movementSize; j < colPos + movementSize; j++)
-            {
-                //check if its movement area of where we spawned before, if it is, destroy it.
-            }
+            Destroy( arrayOfMovementIndicators[index].gameObject );
         }
+        arrayOfMovementIndicators.Clear();
     }
 
 }

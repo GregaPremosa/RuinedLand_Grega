@@ -68,8 +68,9 @@
   <ItemGroup>
     <Compile Include="Assets\_Scripts\Effect.cs" />
     <Compile Include="Assets\_Scripts\Player.cs" />
+    <Compile Include="Assets\_Scripts\Race.cs" />
+    <Compile Include="Assets\_Scripts\Unit.cs" />
     <Compile Include="Assets\_Scripts\terrainGenerator.cs" />
-    <Compile Include="Assets\isci.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

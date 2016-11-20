@@ -228,7 +228,7 @@ public class Scout : Melee
         setArmour(15);
         setAttack(2);
         setInitiate(90);
-        setMovement(7);
+        setMovement(5);
         //melee exclusive
         setAttackRange(1);
         setSize(1);
@@ -247,7 +247,7 @@ public class Chanter : Melee
         setArmour(20);
         setAttack(3);
         setInitiate(20);
-        setMovement(3);
+        setMovement(2);
         //melee exclusive
         setAttackRange(1);
         setSize(1);
@@ -266,7 +266,7 @@ public class Archer : Ranged
         setArmour(20);
         setAttack(3);
         setInitiate(50);
-        setMovement(4);
+        setMovement(3);
         //ranged exlusive
         setAttackMode(true);
         setSize(1);
