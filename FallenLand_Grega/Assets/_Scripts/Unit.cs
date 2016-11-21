@@ -80,6 +80,7 @@ abstract public class Unit
     public void setUpgrade(int newUpgrade) { upgrade = newUpgrade; }
     public void setRace(string newRace) { race.setLabel(newRace); }
     public void setType(int newType) { type = newType; }
+    public void addEffect(Effect newEffect) { passives.Add(newEffect); }
     //current values
     public void setCurrentHealth(int newCurrentHealth) { currentHealth = newCurrentHealth; }
     public void setCurrentArmour(int newCurrentArmour) { currentArmour = newCurrentArmour; }

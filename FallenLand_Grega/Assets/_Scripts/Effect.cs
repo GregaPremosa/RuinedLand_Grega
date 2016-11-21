@@ -18,11 +18,11 @@ abstract public class Effect
     //set
     public void setDuration(int newDuration) { duration = newDuration; }
     public void setIsDurationBased(bool newIsDurationBased) { isDurationBased = newIsDurationBased; }
-    public void setEffektName(string newName) { effectName = newName; }
+    public void setEffectName(string newName) { effectName = newName; }
     //get
     public int getDuration() { return duration; }
     public bool getIsDurationBased() { return isDurationBased; }
-    public string getEffektName() { return effectName; }
+    public string getEffectName() { return effectName; }
     //decrement duration by 1 toward 0
     public void decrementDuration()
     {
@@ -49,7 +49,7 @@ public class Slow : Effect
 
     public Slow() : base()
     {
-        setEffektName("Slowness");
+        setEffectName("Slowness");
         setIsDurationBased(true);
         setDuration(2);
     }
@@ -67,7 +67,7 @@ public class Haste : Effect
 
     public Haste() : base()
     {
-        setEffektName("Haste");
+        setEffectName("Haste");
         setIsDurationBased(true);
         setDuration(2);
     }
@@ -83,7 +83,7 @@ public class Poison : Effect
 {
     public Poison() : base()
     {
-        setEffektName("Poison");
+        setEffectName("Poison");
         setIsDurationBased(true);
         setDuration(3);
     }
@@ -100,7 +100,7 @@ public class stoneSkin : Effect
     private float bonusArmour = 0.2f;
     public stoneSkin() : base()
     {
-        setEffektName("Stone Skin");
+        setEffectName("Stone Skin");
         setIsDurationBased(true);
         setDuration(3);
     }
@@ -117,7 +117,7 @@ public class imbueWeapon : Effect
 
     public imbueWeapon() : base()
     {
-        setEffektName("Imbued Weapon");
+        setEffectName("Imbued Weapon");
         setIsDurationBased(true);
         setDuration(3);
     }
@@ -134,7 +134,7 @@ public class empowerAlly : Effect
 
     public empowerAlly() : base()
     {
-        setEffektName("Empowered");
+        setEffectName("Empowered");
         setIsDurationBased(true);
         setDuration(1);
     }
@@ -167,5 +167,24 @@ public class PresenceChanter : Effect
     public override void activate(Unit unit)
     {
         //naredi, da vsi ally-i imajo nekaj
+    }
+}
+
+
+
+//BUTTON PRESS DEFEND - increase defense for 15% for 1 turn
+public class DefendYourself : Effect
+{
+    private float multiplier = 0.15f;
+
+    public DefendYourself() : base()
+    {
+        setEffectName("DefendYourself");
+        setIsDurationBased(true);
+        setDuration(1);
+    }
+    public override void activate(Unit unit)
+    {
+        unit.setCurrentArmour( Mathf.RoundToInt(unit.getCurrentArmour()*multiplier) );
     }
 }
