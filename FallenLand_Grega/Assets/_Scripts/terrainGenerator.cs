@@ -230,7 +230,10 @@ public class terrainBlock
         //GameObject tmp = GameObject.Instantiate( newOccupyingEntity ) as GameObject;
         //tmp.transform.position = block.transform.position;
         //occupyingEntity = tmp;
-        newOccupyingEntity.transform.position = block.transform.position;
+        if (newOccupyingEntity != null)
+        {
+            newOccupyingEntity.transform.position = block.transform.position;
+        }
         occupyingEntity = newOccupyingEntity;
     }
     //get
@@ -295,6 +298,7 @@ public class GameLogic: MonoBehaviour
 
     bool startNewRound = true;
     bool unitActions = false;
+    bool changeToNextUnit = false;
     //we manage how game interacts with user by having a boolean and a Coroutine
     void Update()
     {
@@ -394,10 +398,54 @@ public class GameLogic: MonoBehaviour
             //for use of testing we will just check mouse click 1
             if (Input.GetMouseButtonDown(0))
             {
+                //with raycast, we can check which gameObject we hit and make further actions based on this.
+                Ray ray = Camera.main.ScreenPointToRay( Input.mousePosition );
+                RaycastHit hit;
+                if (Physics.Raycast(ray, out hit ,100f))
+                {
+                    //if hit gameobject transforms name is equal to movement indicators name (cant compare gameobject itself, since every movement indicator gameobject is unique), then change position to this clicked movementIndicator and count that as action
+                    if ( hit.transform.gameObject.name == movementIndicator.transform.GetChild(0).gameObject.name )
+                    {
+                        //change Unit to new position
+                        //find clicked position on matrix - find gameobject of clicked indicator
+                        int newRow = 0;
+                        int newCol = 0;
+                        for (int i = 0; i < terrainGenerator.getNumberOfRows(); i++)
+                        {
+                            for (int j = 0; j < terrainGenerator.getNumberOfColumns(); j++)
+                            {
+                                //check if occupying gameobject isnt null - that it exists
+                                if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity() != null)
+                                {
+                                    //check if occupying gameobject has a child
+                                    if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.childCount > 0)
+                                    {
+                                        //check if occupying gameobjects child is gameobject of raycast hit gameobject
+                                        if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.GetChild(0).gameObject == hit.transform.gameObject)
+                                        {
+                                            newRow = i;
+                                            newCol = j;
+                                            Debug.Log("Found the movement indicator!");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        terrainGenerator.getMatrixField()[priorityQueue[0].getRowPos()][priorityQueue[0].getColPos()].setOccupyingEntity(null);
+                        terrainGenerator.getMatrixField()[newRow][newCol].setOccupyingEntity(priorityQueue[0].getModel());
+                        priorityQueue[0].setColPos(newCol);
+                        priorityQueue[0].setRowPos(newRow);
+                        changeToNextUnit = true;
+                    }
+                }
                 //check which Unit was is on bottom index
                 Debug.Log("Unit: " + priorityQueue[0].getModel());
-                priorityQueue.RemoveAt(0);
-                deleteMovementArea();
+                if (changeToNextUnit == true)
+                {
+                    priorityQueue.RemoveAt(0);
+                    deleteMovementArea();
+                    changeToNextUnit = false;
+                }
             }
         }
         if (player1.getAlive() && player2.getAlive() && priorityQueue.Count == 0)
@@ -413,8 +461,8 @@ public class GameLogic: MonoBehaviour
         int movementSize = priorityQueue[0].getCurrentMovement();
         int Rowpos = priorityQueue[0].getRowPos();
         int Colpos = priorityQueue[0].getColPos();
-        Debug.Log("row of unit: " + Rowpos);
-        Debug.Log("column position of unit: " + Colpos);
+        //Debug.Log("row of unit: " + Rowpos);
+        //Debug.Log("column position of unit: " + Colpos);
         //just in case check if everything is okay
         if ((Colpos == -1) && (Rowpos == -1)){ Debug.LogError("GameLogic - Element Unit ni v polju, je pa v priorityQeueue...generirannje movementArea fiiled...ERROR"); }
         //generate area from Left to Right - you have borders set in variables bellow
