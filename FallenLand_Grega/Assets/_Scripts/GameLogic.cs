@@ -6,12 +6,15 @@ public class GameLogic : MonoBehaviour
 {
     //add in editor
     public GameObject movementIndicator;
+    public GameObject attackIndicator;
+    public GameObject previewPositionIndicator;
+    public GameObject currentUnitIndicator;
 
     //private only to this class
     private List<Unit> priorityQueue;
     //we set this values from terrain Start() function.
     private terrain terrainGenerator;
-    private List<GameObject> arrayOfMovementIndicators;
+    private List<GameObject> arrayOfIndicators;
 
     //set this from terrain terrainGenerator
     private Player player1;
@@ -24,7 +27,7 @@ public class GameLogic : MonoBehaviour
         terrainGenerator = null;
         player1 = null;
         player2 = null;
-        arrayOfMovementIndicators = new List<GameObject>();
+        arrayOfIndicators = new List<GameObject>();
     }
 
     public void setPlayer1(Player newPlayer1) { player1 = newPlayer1; }
@@ -160,7 +163,7 @@ public class GameLogic : MonoBehaviour
                                         {
                                             newRow = i;
                                             newCol = j;
-                                            Debug.Log("Found the movement indicator!");
+                                            //Debug.Log("Found the movement indicator!");
                                         }
                                     }
                                 }
@@ -178,7 +181,7 @@ public class GameLogic : MonoBehaviour
                         //check if this Unit is friendly or Enemy
                         Debug.Log("kliknil si na Unit");
                     }
-//Work here next... !
+//Work here next...
                 }
                 //check which Unit was is on bottom index
                 Debug.Log("Unit: " + priorityQueue[0].getModel());
@@ -189,6 +192,7 @@ public class GameLogic : MonoBehaviour
         {
             priorityQueue.RemoveAt(0);
             deleteMovementArea();
+            removeUnitIndicators();
             changeToNextUnit = false;
         }
         if (player1.getAlive() && player2.getAlive() && priorityQueue.Count == 0)
@@ -229,23 +233,114 @@ public class GameLogic : MonoBehaviour
             if (index_row_botLimit > mostBot) { index_row_botLimit = mostBot; }
             for (int index_row = index_row_topLimit; index_row <= index_row_botLimit; index_row++)
             {
+                //spawn movementPosition, where Unit can move
                 if (BM_terrain.getMatrixField()[index_row][index_col].getOccupyingEntity() == null)
                 {
                     GameObject newIndicator = GameObject.Instantiate(movementIndicator) as GameObject;
-                    arrayOfMovementIndicators.Add(newIndicator);
+                    arrayOfIndicators.Add(newIndicator);
                     BM_terrain.getMatrixField()[index_row][index_col].setOccupyingEntity(newIndicator);
+                }
+                //indicate, that enemy can be attacked - via some red aura or indicator
+                else
+                {
+                    //highlight which Unit is currently selected -->
+
+
+                    //attackIndicator spawning -->
+                    //check if this Gameobjects transform has children under it
+                    if (BM_terrain.getMatrixField()[index_row][index_col].getOccupyingEntity().transform.childCount > 0)
+                    {
+                        //if we detect a Unit as first child
+                        if (BM_terrain.getMatrixField()[index_row][index_col].getOccupyingEntity().transform.GetChild(0).tag == "Unit")
+                        {
+                            //save this unit into gameobject reff - clearer code
+                            GameObject unit = BM_terrain.getMatrixField()[index_row][index_col].getOccupyingEntity();
+                            //determine which players is it
+                            Player playerOfUnit = determinePlayerOfUnit(unit);
+                            //go into that player and gt its Unit class
+                            for (int unitIndex = 0; unitIndex < playerOfUnit.getArrayUnits().Count; unitIndex++)
+                            {
+                                if (playerOfUnit.getArrayUnits()[unitIndex].getModel() == unit)
+                                {
+                                    //now check if this Unit already has indicator of any sort - here we will set its indicators and spawn them
+                                    if (playerOfUnit.getArrayUnits()[unitIndex].getBattleIndicator() == null)
+                                    {
+                                        //if movement area spawner detects currently selected Unit as occupying entity
+                                        if (playerOfUnit.getArrayUnits()[unitIndex].getModel() == priorityQueue[0].getModel())
+                                        {
+                                            Debug.Log("We are targeting selected Unit");
+                                            GameObject indicator_self = GameObject.Instantiate(currentUnitIndicator) as GameObject;
+                                            indicator_self.transform.position = new Vector3(unit.transform.position.x, currentUnitIndicator.transform.position.y, unit.transform.position.z);
+                                            playerOfUnit.getArrayUnits()[unitIndex].setBattleIndicator(indicator_self);
+                                            arrayOfIndicators.Add(indicator_self);
+                                        }
+                                        //if movement area spawner detects another non-selected Unit as occupying entity
+                                        else
+                                        {
+                                            if (playerOfUnit != determinePlayerOfUnit(priorityQueue[0].getModel()))
+                                            {
+                                                Debug.Log("Enemy Unit detected");
+                                                GameObject indicator_attack = GameObject.Instantiate(attackIndicator) as GameObject;
+                                                indicator_attack.transform.position = new Vector3(unit.transform.position.x,attackIndicator.transform.position.y,unit.transform.position.z);
+                                                playerOfUnit.getArrayUnits()[unitIndex].setBattleIndicator(attackIndicator);
+                                                arrayOfIndicators.Add(indicator_attack);
+                                            }
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
+
+    public void removeUnitIndicators()
+    {
+        for (int indexUnit = 0; indexUnit < player1.getArrayUnits().Count; indexUnit++)
+        {
+            player1.getArrayUnits()[indexUnit].setBattleIndicator(null);
+        }
+        for (int indexUnit = 0; indexUnit < player2.getArrayUnits().Count; indexUnit++)
+        {
+            player2.getArrayUnits()[indexUnit].setBattleIndicator(null);
+        }
+    }
+
+    //determine to which Player does Unit belong
+    public Player determinePlayerOfUnit(GameObject checkedUnit)
+    {
+        //first check in player1's array
+        for (int i = 0; i < player1.getArrayUnits().Count; i++)
+        {
+            if (player1.getArrayUnits()[i].getModel() == checkedUnit)
+            {
+                return player1;
+            }
+        }
+        //now check in player2's array
+        for (int i = 0; i < player2.getArrayUnits().Count; i++)
+        {
+            if (player2.getArrayUnits()[i].getModel() == checkedUnit)
+            {
+                return player2;
+            }
+        }
+        //Unit isnt in either's player array
+        Debug.LogError("Unit is in neither players array");
+        return null;
+    }
+
     //after unit is deselected, release all movement areas he was to taking
     public void deleteMovementArea()
     {
-        for (int index = 0; index < arrayOfMovementIndicators.Count; index++)
+        for (int index = 0; index < arrayOfIndicators.Count; index++)
         {
-            Destroy(arrayOfMovementIndicators[index].gameObject);
+            Destroy(arrayOfIndicators[index].gameObject);
         }
-        arrayOfMovementIndicators.Clear();
+        arrayOfIndicators.Clear();
     }
 
     //UI CLICK FUNCTIONS - these can and should be separate from clicks we make on the game Board itself since this is UI and Board is game itself (2 separate elements of the game as a whole)

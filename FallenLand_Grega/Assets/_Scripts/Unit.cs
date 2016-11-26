@@ -28,6 +28,7 @@ abstract public class Unit
     private int type; //type defines what Unit it is:Scout(0), Warrior(1), Archer(2), Mage(3), Chanter(4)
 
     private GameObject model;
+    private GameObject battleIndicator; //here we hold indicator; if its currently selected, spawn proper gameobject, if its enemy unit that can be attack, spawn attack indicator, if its interactable ally, spawn proper gameobject,...
     private Sprite modelImage; //every Unit also has unit, which is used it Map view
     List<Effect> passives; //we can later add these and they will take effects in battle(boost certain unit types, debuff enemies, special unit powers, etc.)
                            //Race raceType //when we add races, we can assign race type here aswell
@@ -65,6 +66,7 @@ abstract public class Unit
 
         passives = new List<Effect>();
         rangedMode = false;
+        battleIndicator = null;
         //model = null;
     }
     //set
@@ -93,6 +95,7 @@ abstract public class Unit
     {
         model = GameObject.Instantiate(modelHolder.arrayBasedOnRace[race.getRaceIndex()].arrayBasedOnType[getType()].arrayBasedOnUpgrade[getUpgrade()]) as GameObject;
     }
+    public void setBattleIndicator(GameObject newBattleIndicator) { battleIndicator = newBattleIndicator; }
     public void setSprite(Sprite newModelImage) { modelImage = newModelImage; }
     //get
     //static values
@@ -116,6 +119,7 @@ abstract public class Unit
     public int getCurrentMovement() { return currentMovement; }
     //models & images
     public GameObject getModel() { return model; }
+    public GameObject getBattleIndicator() { return battleIndicator; }
     public Sprite getSprite() { return modelImage; }
 
     //prepare Units stats for start battleMode
