@@ -130,6 +130,12 @@ public class GameLogic : MonoBehaviour
     {
         if (priorityQueue.Count > 0)
         {
+            //check Unit passives - TEMPORARY CHECK
+            for (int passiveCounter = 0; passiveCounter < priorityQueue[0].getPassives().Count; passiveCounter++)
+            {
+                Debug.Log("Unit has passive effect: " + priorityQueue[0].getPassives()[passiveCounter]);
+            }
+
             //here we set unit actions - if condition for each action
             //for each Unit show how far a unit can move and limit him to that range
             generateMovementArea(terrainGenerator);
@@ -178,13 +184,34 @@ public class GameLogic : MonoBehaviour
                     //if hit gameobject is a gameObject of Unit, check if its Unit of another player - if it is, deal melee damage to it (careful: beware of condition that you actualy need to be in range)
                     if (hit.transform.gameObject.tag == "Unit") //on every Unit GameModel(be careful: add Tag to actual model, NOT modelHolder!) we add a 'Unit' tag - so we can check if hit gameobject is unit or not
                     {
-                        //check if this Unit is friendly or Enemy
-                        Debug.Log("kliknil si na Unit");
+                        //Get Unit class from clicked gameobject
+                        //Debug.Log("You clicked on a Unit");
+                        Unit clickedUnit = getUnitClassFromGameobject(hit.transform.gameObject);
+                        //with if we check if currently selected Unit and clicked Unit are under the same player
+                        if (determinePlayerOfUnit(clickedUnit.getModel()) != determinePlayerOfUnit(priorityQueue[0].getModel()))
+                        {
+                            Debug.Log("Current Unit and clicked Unit are not from same player");
+                            //check if Unit has an Indicator
+                            if (clickedUnit.getBattleIndicator() != null)
+                            {
+                                //check if this indicator is battle indicator
+                                if (clickedUnit.getBattleIndicator() == attackIndicator)
+                                {
+                                    //Debug.Log("Selected Unit: " + priorityQueue[0]);
+                                    //Debug.Log("Enemy Unit: " + clickedUnit);
+                                    //Debug.Log("Unit can be attacked in melee!");
+                                    Debug.Log("Current Unit count: " + priorityQueue[0].getCurrentCount() + ", health: " + priorityQueue[0].getCurrentHealth() + ",attack: " + priorityQueue[0].getCurrentAttack());
+                                    Debug.Log("Clicked Unit count: " + clickedUnit.getCurrentCount() + ", health: " + clickedUnit.getCurrentHealth() + ", attack: " + clickedUnit.getCurrentAttack());
+                                    priorityQueue[0].dealDamage(clickedUnit);
+                                    Debug.Log("Clicked Unit count: " + clickedUnit.getCurrentCount() + ", health: " + clickedUnit.getCurrentHealth() + ", attack: " + clickedUnit.getCurrentAttack());
+                                }
+                            }
+// UNDER CONSTRUCTION - ranged attack - check if selected Unit is ranged, check which damage to deal(quarter or full)
+                        }
                     }
-//Work here next...
                 }
-                //check which Unit was is on bottom index
-                Debug.Log("Unit: " + priorityQueue[0].getModel());
+                //check which Unit was on bottom index (if he did action) or which Unit is on bottom index (if player did not do any action)
+                //Debug.Log("Unit: " + priorityQueue[0].getModel());
             }
         }
         //If we implement UI buttons via button functions, we can set this block of code - this if - outside of button click
@@ -211,7 +238,7 @@ public class GameLogic : MonoBehaviour
         //Debug.Log("row of unit: " + Rowpos);
         //Debug.Log("column position of unit: " + Colpos);
         //just in case check if everything is okay
-        if ((Colpos == -1) && (Rowpos == -1)) { Debug.LogError("GameLogic - Element Unit ni v polju, je pa v priorityQeueue...generirannje movementArea fiiled...ERROR"); }
+        if ((Colpos == -1) && (Rowpos == -1)) { Debug.LogError("GameLogic - Element Unit is not in array, but is in priorityQueue...generating movementArea failed...ERROR"); }
         //generate area from Left to Right - you have borders set in variables bellow
         //check borders for spawning
         //mostLeft and mostRight
@@ -243,10 +270,7 @@ public class GameLogic : MonoBehaviour
                 //indicate, that enemy can be attacked - via some red aura or indicator
                 else
                 {
-                    //highlight which Unit is currently selected -->
-
-
-                    //attackIndicator spawning -->
+                    //attackIndicator & selfUnit indicator spawning -->
                     //check if this Gameobjects transform has children under it
                     if (BM_terrain.getMatrixField()[index_row][index_col].getOccupyingEntity().transform.childCount > 0)
                     {
@@ -268,7 +292,7 @@ public class GameLogic : MonoBehaviour
                                         //if movement area spawner detects currently selected Unit as occupying entity
                                         if (playerOfUnit.getArrayUnits()[unitIndex].getModel() == priorityQueue[0].getModel())
                                         {
-                                            Debug.Log("We are targeting selected Unit");
+                                            //Debug.Log("We are targeting selected Unit");
                                             GameObject indicator_self = GameObject.Instantiate(currentUnitIndicator) as GameObject;
                                             indicator_self.transform.position = new Vector3(unit.transform.position.x, currentUnitIndicator.transform.position.y, unit.transform.position.z);
                                             playerOfUnit.getArrayUnits()[unitIndex].setBattleIndicator(indicator_self);
@@ -279,7 +303,7 @@ public class GameLogic : MonoBehaviour
                                         {
                                             if (playerOfUnit != determinePlayerOfUnit(priorityQueue[0].getModel()))
                                             {
-                                                Debug.Log("Enemy Unit detected");
+                                                //Debug.Log("Enemy Unit detected");
                                                 GameObject indicator_attack = GameObject.Instantiate(attackIndicator) as GameObject;
                                                 indicator_attack.transform.position = new Vector3(unit.transform.position.x,attackIndicator.transform.position.y,unit.transform.position.z);
                                                 playerOfUnit.getArrayUnits()[unitIndex].setBattleIndicator(attackIndicator);
@@ -297,6 +321,39 @@ public class GameLogic : MonoBehaviour
         }
     }
 
+    //get Unit class from GameObject we parse as parameter - if that is possible
+    public Unit getUnitClassFromGameobject(GameObject selectedUnitGameObject)
+    {
+        for (int i = 0; i < player1.getArrayUnits().Count; i++)
+        {
+            if (player1.getArrayUnits()[i].getModel().transform.childCount > 0) //first check if Unit is maybe as child in transform of selectedUnitGameobject
+            {
+                for (int childCounter = 0; childCounter < player1.getArrayUnits()[i].getModel().transform.childCount; childCounter++)
+                {
+                    if (player1.getArrayUnits()[i].getModel().transform.GetChild(childCounter).gameObject == selectedUnitGameObject)
+                    {
+                        //Debug.Log("Unit is in player1 array");
+                        return player1.getArrayUnits()[i];
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < player2.getArrayUnits().Count; i++)
+        {
+            for (int childCounter = 0; childCounter < player2.getArrayUnits()[i].getModel().transform.childCount; childCounter++)
+            {
+                if (player2.getArrayUnits()[i].getModel().transform.GetChild(childCounter).gameObject == selectedUnitGameObject)
+                {
+                    //Debug.Log("Unit is in player2 array");
+                    return player2.getArrayUnits()[i];
+                }
+            }
+        }
+        Debug.Log("Unit is in neither of player's arrays");
+        return null;
+    }
+
+    //remove all Unit indicators - self target, attack indicator & ground indicators
     public void removeUnitIndicators()
     {
         for (int indexUnit = 0; indexUnit < player1.getArrayUnits().Count; indexUnit++)

@@ -30,9 +30,12 @@ public class terrainGenerator : MonoBehaviour
         Archer testArcher_1 = new Archer();
         Warrior testWarrior_1 = new Warrior();
         Scout testScout_1 = new Scout();
-        testArcher_1.setModel(arrayModels);
-        testWarrior_1.setModel(arrayModels);
-        testScout_1.setModel(arrayModels);
+        testArcher_1.setModel(arrayModels); //set model
+        testArcher_1.setCount(10); //set some temporary count
+        testWarrior_1.setModel(arrayModels);  //set model
+        testWarrior_1.setCount(10); //set some temporary count
+        testScout_1.setModel(arrayModels);  //set model
+        testScout_1.setCount(10); //set some temporary count
         player1.addUnit(testArcher_1);
         player1.addUnit(testScout_1);
         player2.addUnit(testWarrior_1);

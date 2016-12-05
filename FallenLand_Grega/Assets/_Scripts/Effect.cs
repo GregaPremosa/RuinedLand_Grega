@@ -56,7 +56,7 @@ public class Slow : Effect
 
     override public void activate(Unit unit)
     {
-        unit.setCurrentMovement(Mathf.RoundToInt(unit.getCurrentMovement() * speedMultiplier));
+        unit.setCurrentMovement( unit.getCurrentMovement()-Mathf.RoundToInt(unit.getCurrentMovement() * speedMultiplier));
     }
 }
 
@@ -74,7 +74,7 @@ public class Haste : Effect
 
     public override void activate(Unit unit)
     {
-        unit.setCurrentMovement( Mathf.RoundToInt(unit.getCurrentMovement() * speedMultiplier) );
+        unit.setCurrentMovement( unit.getCurrentMovement()+Mathf.RoundToInt(unit.getCurrentMovement() * speedMultiplier) );
     }
 }
 
@@ -141,7 +141,7 @@ public class empowerAlly : Effect
     public override void activate(Unit unit)
     {
         //increase initiative or 1 turn
-        unit.setCurrentInitiative( Mathf.RoundToInt(unit.getCurrentInitiate()*multiplier) );
+        unit.setCurrentInitiative( unit.getCurrentInitiate() + Mathf.RoundToInt(unit.getCurrentInitiate()*multiplier) );
     }
 }
 
@@ -185,6 +185,6 @@ public class DefendYourself : Effect
     }
     public override void activate(Unit unit)
     {
-        unit.setCurrentArmour( Mathf.RoundToInt(unit.getCurrentArmour()*multiplier) );
+        unit.setCurrentArmour( unit.getCurrentArmour()+Mathf.RoundToInt(unit.getCurrentArmour()*multiplier) );
     }
 }

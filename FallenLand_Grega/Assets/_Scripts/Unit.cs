@@ -117,6 +117,7 @@ abstract public class Unit
     public int getCurrentCount() { return currentCount; }
     public int getCurrentInitiate() { return currentInitiative; }
     public int getCurrentMovement() { return currentMovement; }
+    public List<Effect> getPassives() { return passives; }
     //models & images
     public GameObject getModel() { return model; }
     public GameObject getBattleIndicator() { return battleIndicator; }
@@ -135,23 +136,55 @@ abstract public class Unit
     //calculate damage - NOTE: here, you need to take in consideration base damage, effects and armour of enemy unit.
     public void dealDamage(Unit enemyUnit)
     {
-        currentAttack = attack;
+        enemyUnit.applyEffects();
         applyEffects();
-        currentAttack = currentAttack - (currentAttack * enemyUnit.getArmour());
-        enemyUnit.takeDamage(currentAttack);
+        currentAttack = attack;
+        int dealDamage = currentAttack;
+        dealDamage = dealDamage * getCurrentCount(); //every actualy unit inside class Unit does damage
+        //Debug.Log("Damage pre reduction: " + dealDamage );
+        //Debug.Log("Enemy (RAW) armour: " + enemyUnit.getCurrentArmour() );
+        //Debug.Log("Enemy (CALCULATED) armour: " + Mathf.RoundToInt( dealDamage * Mathf.RoundToInt(enemyUnit.getCurrentArmour()) / 100));
+        dealDamage = dealDamage - Mathf.CeilToInt(dealDamage * enemyUnit.getCurrentArmour() / 100);
+        //Debug.Log("Damage post reduction: " + dealDamage);
+        enemyUnit.takeDamage(dealDamage);
     }
     //taking damage - doesnt count armour yet
     public void takeDamage(int damage)
     {
-        int damageCount = damage;
-        while (damageCount > 0)
+        int damageCounter = damage;
+        while (damageCounter > 0)
         {
-            if (damageCount >= currentHealth)
+            if (currentCount >= 1 && currentHealth > 0)
             {
-                damageCount = damageCount - currentHealth;
+                currentHealth--;
+                damageCounter--;
+            }
+            else if (currentCount >= 2 && currentHealth == 0)
+            {
                 currentHealth = health;
                 currentCount--;
+                currentHealth--;
+                damageCounter--;
             }
+            if (currentCount == 1 && currentHealth == 0 )
+            {
+                currentCount = 0;
+                Debug.Log("Unit died");
+                break;
+            }
+        }
+        //set current count into count
+        count = currentCount;
+        //after battle, check if Unit lives or not
+        if ( currentCount >= 2 && getCurrentHealth()==0 )
+        {
+            currentHealth = health;
+            currentCount--;
+        }
+        else if (currentCount == 0)
+        {
+//UNDER CONSTRUCTION
+            //properly remove Unit from gameLogic, player array and terminate gameobject + generated class
         }
     }
     //iterate effects and apply to current stats
@@ -159,7 +192,18 @@ abstract public class Unit
     {
         for (int i = 0; i < passives.Count; i++)
         {
+            //activate passive effect
             passives[i].activate(this);
+            //if passive is duration based, decrement the value aswell
+            if (passives[i].getIsDurationBased())
+            {
+                passives[i].decrementDuration();
+            }
+            //remove any passive, that's duration is 0
+            if (passives[i].getDuration() == 0)
+            {
+                passives.RemoveAt(i);
+            }
         }
     }
     //for location on matrix
