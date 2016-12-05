@@ -154,6 +154,12 @@ abstract public class Unit
         int damageCounter = damage;
         while (damageCounter > 0)
         {
+            if (currentCount <= 1 && currentHealth == 0)
+            {
+                currentCount = 0;
+                Debug.Log("Unit dead");
+                damageCounter = 0;
+            }
             if (currentCount >= 1 && currentHealth > 0)
             {
                 currentHealth--;
@@ -166,12 +172,8 @@ abstract public class Unit
                 currentHealth--;
                 damageCounter--;
             }
-            if (currentCount == 1 && currentHealth == 0 )
-            {
-                currentCount = 0;
-                Debug.Log("Unit died");
-                break;
-            }
+//UNDER CONSTRUCTION - FIX SO IT NEVER GETS TO THIS ELSE (so that damage counter is always properly set)
+            else { Debug.Log("Unit takeDamage Infinite loop would be cause for wrong reason"); damageCounter--; }
         }
         //set current count into count
         count = currentCount;
@@ -183,10 +185,11 @@ abstract public class Unit
         }
         else if (currentCount == 0)
         {
-//UNDER CONSTRUCTION
+            //UNDER CONSTRUCTION
             //properly remove Unit from gameLogic, player array and terminate gameobject + generated class
         }
     }
+
     //iterate effects and apply to current stats
     public void applyEffects()
     {

@@ -43,6 +43,17 @@ public class Player
             alive = false;
         }
     }
+    public void checkUnitsStatus()
+    {
+        for (int i = 0; i < arrayUnits.Count; i++)
+        {
+            if (arrayUnits[i].getCurrentCount() == 0)
+            {
+                //Unit tmp = arrayUnits[i];
+                //arrayUnits.RemoveAt(i);
+            }
+        }
+    }
     //when we have a working priority queue we can delete set method - it is just so we can manually test alive state(it works auto with function above)
     public void setAlive(bool newalive) { alive = newalive; }
 }

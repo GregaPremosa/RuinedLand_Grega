@@ -4,8 +4,14 @@ using System.Collections.Generic;
 
 public class GameLogic : MonoBehaviour
 {
-    //boolean which is responsible for showing  where Unit can move to attack
-    bool attackMode;
+    //action mode:
+    /*
+   actionMode = 0 //means movement,defend and decide if you want to attack
+   actionMode = 1 //attack has been selected, move your Unit to new indicator and declare by doing so, you complete action ->return to 0 after
+         */
+    private int actionMode;
+    private bool generateNewMovArea;
+    private Unit targetUnit;
 
     //add in editor
     public GameObject movementIndicator;
@@ -25,7 +31,8 @@ public class GameLogic : MonoBehaviour
 
     public GameLogic() : base()
     {
-        attackMode = false;
+        actionMode = 0;
+        generateNewMovArea = true;
         priorityQueue = null;
         movementIndicator = null;
         terrainGenerator = null;
@@ -134,61 +141,36 @@ public class GameLogic : MonoBehaviour
     {
         if (priorityQueue.Count > 0)
         {
-            //check Unit passives - TEMPORARY CHECK
-            for (int passiveCounter = 0; passiveCounter < priorityQueue[0].getPassives().Count; passiveCounter++)
+            if (actionMode == 0)
             {
-                Debug.Log("Unit has passive effect: " + priorityQueue[0].getPassives()[passiveCounter]);
-            }
+                //check Unit passives - TEMPORARY CHECK
+                //for (int passiveCounter = 0; passiveCounter < priorityQueue[0].getPassives().Count; passiveCounter++)
+                //{
+                //    Debug.Log("Unit has passive effect: " + priorityQueue[0].getPassives()[passiveCounter]);
+                //}
 
-            //here we set unit actions - if condition for each action
-            //for each Unit show how far a unit can move and limit him to that range
-            generateMovementArea(terrainGenerator);
-            //for use of testing we will just check mouse click 1
-            if (Input.GetMouseButtonDown(0))
-            {
-                //with raycast, we can check which gameObject we hit and make further actions based on this.
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hit;
-                if (Physics.Raycast(ray, out hit, 100f))
+                //here we set unit actions - if condition for each action
+                //for each Unit show how far a unit can move and limit him to that range
+                if (generateNewMovArea)
                 {
-                    if (attackMode == false)
+                    generateMovementArea(terrainGenerator);
+                    generateNewMovArea = false;
+                }
+                //for use of testing we will just check mouse click 1
+                if (Input.GetMouseButtonDown(0))
+                {
+                    //with raycast, we can check which gameObject we hit and make further actions based on this.
+                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    RaycastHit hit;
+                    if (Physics.Raycast(ray, out hit, 100f))
                     {
-                        //if hit gameobject transforms name is equal to movement indicators name (cant compare gameobject itself, since every movement indicator gameobject is unique), then change position to this clicked movementIndicator and count that as action
                         if (hit.transform.gameObject.name == movementIndicator.transform.GetChild(0).gameObject.name)
                         {
-                            //change Unit to new position
-                            //find clicked position on matrix - find gameobject of clicked indicator
-                            int newRow = 0;
-                            int newCol = 0;
-                            for (int i = 0; i < terrainGenerator.getNumberOfRows(); i++)
-                            {
-                                for (int j = 0; j < terrainGenerator.getNumberOfColumns(); j++)
-                                {
-                                    //check if occupying gameobject isnt null - that it exists
-                                    if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity() != null)
-                                    {
-                                        //check if occupying gameobject has a child
-                                        if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.childCount > 0)
-                                        {
-                                            //check if occupying gameobjects child is gameobject of raycast hit gameobject
-                                            if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.GetChild(0).gameObject == hit.transform.gameObject)
-                                            {
-                                                newRow = i;
-                                                newCol = j;
-                                                //Debug.Log("Found the movement indicator!");
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            terrainGenerator.getMatrixField()[priorityQueue[0].getRowPos()][priorityQueue[0].getColPos()].setOccupyingEntity(null);
-                            terrainGenerator.getMatrixField()[newRow][newCol].setOccupyingEntity(priorityQueue[0].getModel());
-                            priorityQueue[0].setColPos(newCol);
-                            priorityQueue[0].setRowPos(newRow);
+                            changeUnitPosition(hit);
                             changeToNextUnit = true;
                         }
                         //if hit gameobject is a gameObject of Unit, check if its Unit of another player - if it is, deal melee damage to it (careful: beware of condition that you actualy need to be in range)
-                        if (hit.transform.gameObject.tag == "Unit") //on every Unit GameModel(be careful: add Tag to actual model, NOT modelHolder!) we add a 'Unit' tag - so we can check if hit gameobject is unit or not
+                        else if (hit.transform.gameObject.tag == "Unit") //on every Unit GameModel(be careful: add Tag to actual model, NOT modelHolder!) we add a 'Unit' tag - so we can check if hit gameobject is unit or not
                         {
                             //Get Unit class from clicked gameobject
                             //Debug.Log("You clicked on a Unit");
@@ -205,13 +187,14 @@ public class GameLogic : MonoBehaviour
                                     {
                                         //Debug.Log("Unit can be attacked in melee!");
                                         //priorityQueue[0].dealDamage(clickedUnit);
+                                        targetUnit = clickedUnit;
                                         List<GameObject> enemyAdjacentMovementIndicators = new List<GameObject>();
                                         enemyAdjacentMovementIndicators = findAdjacentMovementIndicators(clickedUnit);
-                                        Debug.Log("Velikost movement indicator: " + enemyAdjacentMovementIndicators.Count);
+                                        //Debug.Log("size of movement indicator: " + enemyAdjacentMovementIndicators.Count);
+                                        //clear all OBJECT indicators, which are not meant for melee range possible movement position
                                         for (int movementIndex = 0; movementIndex < arrayOfIndicators.Count; movementIndex++)
                                         {
                                             bool delete = true;
-//UNDER CONSTRUCTION - make it so only ADJACENT movement indicators are kept
                                             for (int adjMovementIndex = 0; adjMovementIndex < enemyAdjacentMovementIndicators.Count; adjMovementIndex++)
                                             {
                                                 if (arrayOfIndicators[movementIndex].transform.position == enemyAdjacentMovementIndicators[adjMovementIndex].transform.position)
@@ -225,26 +208,58 @@ public class GameLogic : MonoBehaviour
                                                 Destroy(arrayOfIndicators[movementIndex].gameObject);
                                             }
                                         }
-//UNDER CONSTRUCTION
-                                        attackMode = true;
-                                        StartCoroutine(changeToAttackPositionAndAttack(clickedUnit));
+                                        //properly clear ALL indicators...
+                                        arrayOfIndicators.Clear();
+                                        //now save only those we preserved before and are still existing as Objects - the actual movement areas for attack
+                                        for (int i = 0; i < enemyAdjacentMovementIndicators.Count; i++)
+                                        {
+                                            arrayOfIndicators.Add(enemyAdjacentMovementIndicators[i]);
+                                        }
+                                        //we wont need unit indicators anymore either, since we deleted their gameobjects
+                                        removeUnitIndicators();
+                                        actionMode = 1;
                                     }
                                 }
 // UNDER CONSTRUCTION - ranged attack - check if selected Unit is ranged, check which damage to deal(quarter or full)
                             }
                         }
                     }
+                    //check which Unit was on bottom index (if he did action) or which Unit is on bottom index (if player did not do any action)
+                    //Debug.Log("Unit: " + priorityQueue[0].getModel());
                 }
-                //check which Unit was on bottom index (if he did action) or which Unit is on bottom index (if player did not do any action)
-                //Debug.Log("Unit: " + priorityQueue[0].getModel());
+            }
+            else if (actionMode == 1)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    RaycastHit hit;
+                    if (Physics.Raycast(ray, out hit, 100f))
+                    {
+                        if (hit.transform.gameObject.name == movementIndicator.transform.GetChild(0).gameObject.name)
+                        {
+                            //change Unit to new position
+                            changeUnitPosition(hit);
+                        }
+
+                        //now deal damage to enemy Unit
+                        priorityQueue[0].dealDamage(targetUnit);
+                        targetUnit = null;
+                        changeToNextUnit = true;
+                        actionMode = 0;
+                        deleteMovementArea();
+                    }
+                }
             }
         }
+            
         //If we implement UI buttons via button functions, we can set this block of code - this if - outside of button click
         if (changeToNextUnit == true)
         {
             priorityQueue.RemoveAt(0);
             deleteMovementArea();
             removeUnitIndicators();
+            generateNewMovArea = true;
             changeToNextUnit = false;
         }
         if (player1.getAlive() && player2.getAlive() && priorityQueue.Count == 0)
@@ -253,6 +268,42 @@ public class GameLogic : MonoBehaviour
             startNewRound = true;
         }
         yield break;
+    }
+
+    public void changeUnitPosition(RaycastHit hit)
+    {
+        if (hit.transform.gameObject.name == movementIndicator.transform.GetChild(0).gameObject.name)
+        {
+            //change Unit to new position
+            //find clicked position on matrix - find gameobject of clicked indicator
+            int newRow = 0;
+            int newCol = 0;
+            for (int i = 0; i < terrainGenerator.getNumberOfRows(); i++)
+            {
+                for (int j = 0; j < terrainGenerator.getNumberOfColumns(); j++)
+                {
+                    //check if occupying gameobject isnt null - that it exists
+                    if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity() != null)
+                    {
+                        //check if occupying gameobject has a child
+                        if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.childCount > 0)
+                        {
+                            //check if occupying gameobjects child is gameobject of raycast hit gameobject
+                            if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.GetChild(0).gameObject == hit.transform.gameObject)
+                            {
+                                newRow = i;
+                                newCol = j;
+                                //Debug.Log("Found the movement indicator!");
+                            }
+                        }
+                    }
+                }
+            }
+            terrainGenerator.getMatrixField()[priorityQueue[0].getRowPos()][priorityQueue[0].getColPos()].setOccupyingEntity(null);
+            terrainGenerator.getMatrixField()[newRow][newCol].setOccupyingEntity(priorityQueue[0].getModel());
+            priorityQueue[0].setColPos(newCol);
+            priorityQueue[0].setRowPos(newRow);
+        }
     }
 
     public void generateMovementArea(terrain BM_terrain)
@@ -345,6 +396,7 @@ public class GameLogic : MonoBehaviour
             }
         }
     }
+
     //save movement indicators adjacent to enemy Unit, which we will use for melee engagement on that Unit
     public List<GameObject> findAdjacentMovementIndicators(Unit enemyUnit)
     {
@@ -356,7 +408,6 @@ public class GameLogic : MonoBehaviour
                 {
                     if (terrainGenerator.getMatrixField()[row_i][col_i].getOccupyingEntity() == enemyUnit.getModel())
                     {
-                        terrainBlock tb_enemyUnit = terrainGenerator.getMatrixField()[row_i][col_i];
                         //set lower column value
                         int lower_col = col_i - 1;
                         if (lower_col < 0) { lower_col = 0; }
@@ -365,24 +416,24 @@ public class GameLogic : MonoBehaviour
                         if (upper_col >= terrainGenerator.getNumberOfColumns()) { upper_col = terrainGenerator.getNumberOfColumns() - 1; }
                         //set lower row index value
                         int lower_row = row_i - 1;
-                        if (lower_row < 0) { row_i = 0; }
+                        if (lower_row < 0) { lower_row = 0; }
                         //set upper row index value
                         int upper_row = row_i + 1;
                         if (upper_row >= terrainGenerator.getNumberOfRows()) { upper_row = terrainGenerator.getNumberOfRows() - 1; }
-                        Debug.Log("enemyUnit terrain block found...");
                         List<GameObject> returnedMovementIndicators = new List<GameObject>();
                         for (int ind_r = lower_row; ind_r <= upper_row; ind_r++)
                         {
                             for (int ind_c = lower_col; ind_c <= upper_col; ind_c++)
                             {
-                                if (terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity() != null && terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity().transform.childCount > 0)
+                                if (terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity() != null)
                                 {
-                                    //Debug.Log("Element 1 (terrainGenerator go): " + terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity().transform.GetChild(0).gameObject);
-                                    //Debug.Log("Element 2 (movementindicator go): " + movementIndicator.transform.GetChild(0).gameObject);
-                                    if (terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity().transform.GetChild(0).gameObject.name == movementIndicator.transform.GetChild(0).gameObject.name)
+                                    if (terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity().transform.childCount > 0)
                                     {
-                                        Debug.Log("MOVEMENT INDICATOR ADDED");
-                                        returnedMovementIndicators.Add(terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity());
+                                        if (terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity().transform.GetChild(0).gameObject.name == movementIndicator.transform.GetChild(0).gameObject.name)
+                                        {
+                                            // Debug.Log("MOVEMENT INDICATOR ADDED");
+                                            returnedMovementIndicators.Add(terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity());
+                                        }
                                     }
                                 }
                             }
@@ -394,21 +445,6 @@ public class GameLogic : MonoBehaviour
         }
         Debug.Log("GameLogic - Enemy Units terrain block not found, eventhough it is on the field... Error");
         return null;
-    }
-//UNDER CONSTRUCTION
-    //change currently selected Unit to new movement position and execute an attack
-    IEnumerator changeToAttackPositionAndAttack(Unit enemyUnit)
-    {
-        //DONT FORGET TO SET ATTACKMODE = FALSE AFTER DAMAGE DEALING
-        while (true)
-        {
-            if (Input.GetMouseButtonDown(0))
-            {
-                //check if Unit clicked in movement area
-            }
-            yield return new WaitForEndOfFrame();
-        }
-        yield break;
     }
 
     //get Unit class from GameObject we parse as parameter - if that is possible
@@ -483,11 +519,16 @@ public class GameLogic : MonoBehaviour
     //after unit is deselected, release all movement areas he was to taking
     public void deleteMovementArea()
     {
+        //delete indicator objects
         for (int index = 0; index < arrayOfIndicators.Count; index++)
         {
-            Destroy(arrayOfIndicators[index].gameObject);
+            Destroy(arrayOfIndicators[index]);
         }
-        arrayOfIndicators.Clear();
+        //clear array of indicators properly
+        while (arrayOfIndicators.Count != 0)
+        {
+            arrayOfIndicators.RemoveAt(0);
+        }
     }
 
     //UI CLICK FUNCTIONS - these can and should be separate from clicks we make on the game Board itself since this is UI and Board is game itself (2 separate elements of the game as a whole)
