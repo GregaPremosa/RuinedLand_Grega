@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 public class GameLogic : MonoBehaviour
 {
+    //boolean which is responsible for showing  where Unit can move to attack
+    bool attackMode;
+
     //add in editor
     public GameObject movementIndicator;
     public GameObject attackIndicator;
@@ -22,6 +25,7 @@ public class GameLogic : MonoBehaviour
 
     public GameLogic() : base()
     {
+        attackMode = false;
         priorityQueue = null;
         movementIndicator = null;
         terrainGenerator = null;
@@ -147,66 +151,87 @@ public class GameLogic : MonoBehaviour
                 RaycastHit hit;
                 if (Physics.Raycast(ray, out hit, 100f))
                 {
-                    //if hit gameobject transforms name is equal to movement indicators name (cant compare gameobject itself, since every movement indicator gameobject is unique), then change position to this clicked movementIndicator and count that as action
-                    if (hit.transform.gameObject.name == movementIndicator.transform.GetChild(0).gameObject.name)
+                    if (attackMode == false)
                     {
-                        //change Unit to new position
-                        //find clicked position on matrix - find gameobject of clicked indicator
-                        int newRow = 0;
-                        int newCol = 0;
-                        for (int i = 0; i < terrainGenerator.getNumberOfRows(); i++)
+                        //if hit gameobject transforms name is equal to movement indicators name (cant compare gameobject itself, since every movement indicator gameobject is unique), then change position to this clicked movementIndicator and count that as action
+                        if (hit.transform.gameObject.name == movementIndicator.transform.GetChild(0).gameObject.name)
                         {
-                            for (int j = 0; j < terrainGenerator.getNumberOfColumns(); j++)
+                            //change Unit to new position
+                            //find clicked position on matrix - find gameobject of clicked indicator
+                            int newRow = 0;
+                            int newCol = 0;
+                            for (int i = 0; i < terrainGenerator.getNumberOfRows(); i++)
                             {
-                                //check if occupying gameobject isnt null - that it exists
-                                if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity() != null)
+                                for (int j = 0; j < terrainGenerator.getNumberOfColumns(); j++)
                                 {
-                                    //check if occupying gameobject has a child
-                                    if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.childCount > 0)
+                                    //check if occupying gameobject isnt null - that it exists
+                                    if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity() != null)
                                     {
-                                        //check if occupying gameobjects child is gameobject of raycast hit gameobject
-                                        if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.GetChild(0).gameObject == hit.transform.gameObject)
+                                        //check if occupying gameobject has a child
+                                        if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.childCount > 0)
                                         {
-                                            newRow = i;
-                                            newCol = j;
-                                            //Debug.Log("Found the movement indicator!");
+                                            //check if occupying gameobjects child is gameobject of raycast hit gameobject
+                                            if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.GetChild(0).gameObject == hit.transform.gameObject)
+                                            {
+                                                newRow = i;
+                                                newCol = j;
+                                                //Debug.Log("Found the movement indicator!");
+                                            }
                                         }
                                     }
                                 }
                             }
+                            terrainGenerator.getMatrixField()[priorityQueue[0].getRowPos()][priorityQueue[0].getColPos()].setOccupyingEntity(null);
+                            terrainGenerator.getMatrixField()[newRow][newCol].setOccupyingEntity(priorityQueue[0].getModel());
+                            priorityQueue[0].setColPos(newCol);
+                            priorityQueue[0].setRowPos(newRow);
+                            changeToNextUnit = true;
                         }
-                        terrainGenerator.getMatrixField()[priorityQueue[0].getRowPos()][priorityQueue[0].getColPos()].setOccupyingEntity(null);
-                        terrainGenerator.getMatrixField()[newRow][newCol].setOccupyingEntity(priorityQueue[0].getModel());
-                        priorityQueue[0].setColPos(newCol);
-                        priorityQueue[0].setRowPos(newRow);
-                        changeToNextUnit = true;
-                    }
-                    //if hit gameobject is a gameObject of Unit, check if its Unit of another player - if it is, deal melee damage to it (careful: beware of condition that you actualy need to be in range)
-                    if (hit.transform.gameObject.tag == "Unit") //on every Unit GameModel(be careful: add Tag to actual model, NOT modelHolder!) we add a 'Unit' tag - so we can check if hit gameobject is unit or not
-                    {
-                        //Get Unit class from clicked gameobject
-                        //Debug.Log("You clicked on a Unit");
-                        Unit clickedUnit = getUnitClassFromGameobject(hit.transform.gameObject);
-                        //with if we check if currently selected Unit and clicked Unit are under the same player
-                        if (determinePlayerOfUnit(clickedUnit.getModel()) != determinePlayerOfUnit(priorityQueue[0].getModel()))
+                        //if hit gameobject is a gameObject of Unit, check if its Unit of another player - if it is, deal melee damage to it (careful: beware of condition that you actualy need to be in range)
+                        if (hit.transform.gameObject.tag == "Unit") //on every Unit GameModel(be careful: add Tag to actual model, NOT modelHolder!) we add a 'Unit' tag - so we can check if hit gameobject is unit or not
                         {
-                            Debug.Log("Current Unit and clicked Unit are not from same player");
-                            //check if Unit has an Indicator
-                            if (clickedUnit.getBattleIndicator() != null)
+                            //Get Unit class from clicked gameobject
+                            //Debug.Log("You clicked on a Unit");
+                            Unit clickedUnit = getUnitClassFromGameobject(hit.transform.gameObject);
+                            //with if we check if currently selected Unit and clicked Unit are under the same player
+                            if (determinePlayerOfUnit(clickedUnit.getModel()) != determinePlayerOfUnit(priorityQueue[0].getModel()))
                             {
-                                //check if this indicator is battle indicator
-                                if (clickedUnit.getBattleIndicator() == attackIndicator)
+                                Debug.Log("Current Unit and clicked Unit are not from same player");
+                                //check if Unit has an Indicator
+                                if (clickedUnit.getBattleIndicator() != null)
                                 {
-                                    //Debug.Log("Selected Unit: " + priorityQueue[0]);
-                                    //Debug.Log("Enemy Unit: " + clickedUnit);
-                                    //Debug.Log("Unit can be attacked in melee!");
-                                    Debug.Log("Current Unit count: " + priorityQueue[0].getCurrentCount() + ", health: " + priorityQueue[0].getCurrentHealth() + ",attack: " + priorityQueue[0].getCurrentAttack());
-                                    Debug.Log("Clicked Unit count: " + clickedUnit.getCurrentCount() + ", health: " + clickedUnit.getCurrentHealth() + ", attack: " + clickedUnit.getCurrentAttack());
-                                    priorityQueue[0].dealDamage(clickedUnit);
-                                    Debug.Log("Clicked Unit count: " + clickedUnit.getCurrentCount() + ", health: " + clickedUnit.getCurrentHealth() + ", attack: " + clickedUnit.getCurrentAttack());
+                                    //check if this indicator is battle indicator
+                                    if (clickedUnit.getBattleIndicator() == attackIndicator)
+                                    {
+                                        //Debug.Log("Unit can be attacked in melee!");
+                                        //priorityQueue[0].dealDamage(clickedUnit);
+                                        List<GameObject> enemyAdjacentMovementIndicators = new List<GameObject>();
+                                        enemyAdjacentMovementIndicators = findAdjacentMovementIndicators(clickedUnit);
+                                        Debug.Log("Velikost movement indicator: " + enemyAdjacentMovementIndicators.Count);
+                                        for (int movementIndex = 0; movementIndex < arrayOfIndicators.Count; movementIndex++)
+                                        {
+                                            bool delete = true;
+//UNDER CONSTRUCTION - make it so only ADJACENT movement indicators are kept
+                                            for (int adjMovementIndex = 0; adjMovementIndex < enemyAdjacentMovementIndicators.Count; adjMovementIndex++)
+                                            {
+                                                if (arrayOfIndicators[movementIndex].transform.position == enemyAdjacentMovementIndicators[adjMovementIndex].transform.position)
+                                                {
+                                                    delete = false;
+                                                    break;
+                                                }
+                                            }
+                                            if (delete == true)
+                                            {
+                                                Destroy(arrayOfIndicators[movementIndex].gameObject);
+                                            }
+                                        }
+//UNDER CONSTRUCTION
+                                        attackMode = true;
+                                        StartCoroutine(changeToAttackPositionAndAttack(clickedUnit));
+                                    }
                                 }
-                            }
 // UNDER CONSTRUCTION - ranged attack - check if selected Unit is ranged, check which damage to deal(quarter or full)
+                            }
                         }
                     }
                 }
@@ -319,6 +344,71 @@ public class GameLogic : MonoBehaviour
                 }
             }
         }
+    }
+    //save movement indicators adjacent to enemy Unit, which we will use for melee engagement on that Unit
+    public List<GameObject> findAdjacentMovementIndicators(Unit enemyUnit)
+    {
+        for (int row_i = 0; row_i < terrainGenerator.getNumberOfRows(); row_i++)
+        {
+            for (int col_i = 0; col_i < terrainGenerator.getNumberOfColumns(); col_i++)
+            {
+                if (terrainGenerator.getMatrixField()[row_i][col_i].getOccupyingEntity() != null)
+                {
+                    if (terrainGenerator.getMatrixField()[row_i][col_i].getOccupyingEntity() == enemyUnit.getModel())
+                    {
+                        terrainBlock tb_enemyUnit = terrainGenerator.getMatrixField()[row_i][col_i];
+                        //set lower column value
+                        int lower_col = col_i - 1;
+                        if (lower_col < 0) { lower_col = 0; }
+                        //set max upper column index value
+                        int upper_col = col_i + 1;
+                        if (upper_col >= terrainGenerator.getNumberOfColumns()) { upper_col = terrainGenerator.getNumberOfColumns() - 1; }
+                        //set lower row index value
+                        int lower_row = row_i - 1;
+                        if (lower_row < 0) { row_i = 0; }
+                        //set upper row index value
+                        int upper_row = row_i + 1;
+                        if (upper_row >= terrainGenerator.getNumberOfRows()) { upper_row = terrainGenerator.getNumberOfRows() - 1; }
+                        Debug.Log("enemyUnit terrain block found...");
+                        List<GameObject> returnedMovementIndicators = new List<GameObject>();
+                        for (int ind_r = lower_row; ind_r <= upper_row; ind_r++)
+                        {
+                            for (int ind_c = lower_col; ind_c <= upper_col; ind_c++)
+                            {
+                                if (terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity() != null && terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity().transform.childCount > 0)
+                                {
+                                    //Debug.Log("Element 1 (terrainGenerator go): " + terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity().transform.GetChild(0).gameObject);
+                                    //Debug.Log("Element 2 (movementindicator go): " + movementIndicator.transform.GetChild(0).gameObject);
+                                    if (terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity().transform.GetChild(0).gameObject.name == movementIndicator.transform.GetChild(0).gameObject.name)
+                                    {
+                                        Debug.Log("MOVEMENT INDICATOR ADDED");
+                                        returnedMovementIndicators.Add(terrainGenerator.getMatrixField()[ind_r][ind_c].getOccupyingEntity());
+                                    }
+                                }
+                            }
+                        }
+                        return returnedMovementIndicators;
+                    }
+                }
+            }
+        }
+        Debug.Log("GameLogic - Enemy Units terrain block not found, eventhough it is on the field... Error");
+        return null;
+    }
+//UNDER CONSTRUCTION
+    //change currently selected Unit to new movement position and execute an attack
+    IEnumerator changeToAttackPositionAndAttack(Unit enemyUnit)
+    {
+        //DONT FORGET TO SET ATTACKMODE = FALSE AFTER DAMAGE DEALING
+        while (true)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                //check if Unit clicked in movement area
+            }
+            yield return new WaitForEndOfFrame();
+        }
+        yield break;
     }
 
     //get Unit class from GameObject we parse as parameter - if that is possible
