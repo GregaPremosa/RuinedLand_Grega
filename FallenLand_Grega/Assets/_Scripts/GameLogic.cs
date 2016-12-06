@@ -244,6 +244,12 @@ public class GameLogic : MonoBehaviour
 
                         //now deal damage to enemy Unit
                         priorityQueue[0].dealDamage(targetUnit);
+                        removeDeadUnit(targetUnit);
+                        if (targetUnit != null)
+                        {
+                            targetUnit.dealDamage(priorityQueue[0]);
+                            removeDeadUnit(priorityQueue[0]);
+                        }
                         targetUnit = null;
                         changeToNextUnit = true;
                         actionMode = 0;
@@ -514,6 +520,18 @@ public class GameLogic : MonoBehaviour
         //Unit isnt in either's player array
         Debug.LogError("Unit is in neither players array");
         return null;
+    }
+
+    //remove unit, if it died
+    public void removeDeadUnit(Unit selectedUnit)
+    {
+        if (selectedUnit.getCurrentCount() == 0)
+        {
+            priorityQueue.Remove(selectedUnit);
+            player1.checkUnitsStatus();
+            player2.checkUnitsStatus();
+            Destroy(selectedUnit.getModel());
+        }
     }
 
     //after unit is deselected, release all movement areas he was to taking

@@ -50,7 +50,7 @@ public class Player
             if (arrayUnits[i].getCurrentCount() == 0)
             {
                 //Unit tmp = arrayUnits[i];
-                //arrayUnits.RemoveAt(i);
+                arrayUnits.RemoveAt(i);
             }
         }
     }

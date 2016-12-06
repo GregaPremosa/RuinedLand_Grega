@@ -126,7 +126,7 @@ abstract public class Unit
     //prepare Units stats for start battleMode
     public void prepareUnitStats()
     {
-        currentHealth = health;
+        //currentHealth = health;
         currentArmour = armour;
         currentAttack = attack;
         currentInitiative = initiative;
@@ -151,42 +151,26 @@ abstract public class Unit
     //taking damage - doesnt count armour yet
     public void takeDamage(int damage)
     {
+        Debug.Log("Damage to take(pre damage): " + damage + ", currentCount: " + currentCount + ", health: " + currentHealth);
         int damageCounter = damage;
-        while (damageCounter > 0)
+        bool changeState = false;
+        while (!changeState && damageCounter>0)
         {
-            if (currentCount <= 1 && currentHealth == 0)
-            {
-                currentCount = 0;
-                Debug.Log("Unit dead");
-                damageCounter = 0;
-            }
-            if (currentCount >= 1 && currentHealth > 0)
-            {
-                currentHealth--;
-                damageCounter--;
-            }
-            else if (currentCount >= 2 && currentHealth == 0)
-            {
-                currentHealth = health;
-                currentCount--;
-                currentHealth--;
-                damageCounter--;
-            }
-//UNDER CONSTRUCTION - FIX SO IT NEVER GETS TO THIS ELSE (so that damage counter is always properly set)
-            else { Debug.Log("Unit takeDamage Infinite loop would be cause for wrong reason"); damageCounter--; }
+            if (currentCount <= 0) { currentCount = 0; changeState = true; }
+            else if (currentCount == 1 && currentHealth == 0) { currentCount = 0; changeState = true; }
+            else if (currentCount == 1 && currentHealth > 0) { currentHealth--; damageCounter--; }
+            else if (currentCount >= 2 && currentHealth == 0) { currentCount--; currentHealth = health; }
+            else if (currentCount >= 2 && currentHealth > 0) { currentHealth--; damageCounter--; }
+            else { Debug.Log("It should not come here"); damageCounter--; }
         }
+        Debug.Log("Damage to take(post damage): " + damage + ", currentCount: " + currentCount + ", health: " + currentHealth);
         //set current count into count
         count = currentCount;
-        //after battle, check if Unit lives or not
-        if ( currentCount >= 2 && getCurrentHealth()==0 )
+        //adjust health after battle - if count is >= 2 and currentHealth is ==0, change currentHealth to health and decrement count
+        if ( currentCount >= 2 && currentHealth==0 )
         {
             currentHealth = health;
             currentCount--;
-        }
-        else if (currentCount == 0)
-        {
-            //UNDER CONSTRUCTION
-            //properly remove Unit from gameLogic, player array and terminate gameobject + generated class
         }
     }
 
@@ -258,6 +242,7 @@ public class Warrior : Melee
         setType(1);
         //basic stats
         setHealth(6);
+        setCurrentHealth(getHealth());
         setArmour(35);
         setAttack(6);
         setInitiate(10);
@@ -277,6 +262,7 @@ public class Scout : Melee
         setType(0);
         //basic stats
         setHealth(4);
+        setCurrentHealth(getHealth());
         setArmour(15);
         setAttack(2);
         setInitiate(90);
@@ -296,6 +282,7 @@ public class Chanter : Melee
         setType(4);
         //basic stats
         setHealth(10);
+        setCurrentHealth(getHealth());
         setArmour(20);
         setAttack(3);
         setInitiate(20);
@@ -315,6 +302,7 @@ public class Archer : Ranged
         setType(2);
         //basic stats
         setHealth(6);
+        setCurrentHealth(getHealth());
         setArmour(20);
         setAttack(3);
         setInitiate(50);
@@ -334,6 +322,7 @@ public class Mage : Ranged
         setType(3);
         //basic stats
         setHealth(5);
+        setCurrentHealth(getHealth());
         setArmour(15);
         setAttack(4);
         setInitiate(40);
