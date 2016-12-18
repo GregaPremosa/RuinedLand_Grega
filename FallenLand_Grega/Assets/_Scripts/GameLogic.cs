@@ -179,14 +179,97 @@ public class GameLogic : MonoBehaviour
                             if (determinePlayerOfUnit(clickedUnit.getModel()) != determinePlayerOfUnit(priorityQueue[0].getModel()))
                             {
                                 Debug.Log("Current Unit and clicked Unit are not from same player");
+                                //RANGED ATTACK
+                                //for ranged attack, we need to check if selected Unit can even do ranged attack
+                                if (priorityQueue[0].getAttackMode() == true)
+                                {
+                                    //check if any enemy Unit is in melee range of current Unit - if it is, we cannot do ranged attack
+                                    int row_min_adjacent = priorityQueue[0].getRowPos() - 1;
+                                    if (row_min_adjacent < 0) { row_min_adjacent = 0; }
+                                    int row_max_adjacent = priorityQueue[0].getRowPos() + 1;
+                                    if (row_max_adjacent >= terrainGenerator.getNumberOfRows()) { row_max_adjacent = terrainGenerator.getNumberOfRows() - 1; }
+                                    int col_min_adjacent = priorityQueue[0].getColPos() - 1;
+                                    if (col_min_adjacent < 0) { col_min_adjacent = 0; }
+                                    int col_max_adjacent = priorityQueue[0].getColPos() + 1;
+                                    if (col_max_adjacent >= terrainGenerator.getNumberOfColumns()) { col_max_adjacent = terrainGenerator.getNumberOfColumns() - 1; }
+                                    //Debug.Log("Ranged Unit adjacent borders to check: rows" + row_min_adjacent +"-"+ row_max_adjacent +", cols: "+ col_min_adjacent +"-"+  col_max_adjacent);
+                                    bool allowRangedAttack = true;
+                                    for (int i = row_min_adjacent; i <= row_max_adjacent; i++)
+                                    {
+                                        for (int j = col_min_adjacent; j <= col_max_adjacent; j++)
+                                        {
+                                            if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity() != null)
+                                            {
+                                                if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.childCount > 0)
+                                                {
+                                                    if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.GetChild(0).tag == "Unit")
+                                                    {
+                                                        if (determinePlayerOfUnit(priorityQueue[0].getModel()) != determinePlayerOfUnit(terrainGenerator.getMatrixField()[i][j].getOccupyingEntity()))
+                                                        {
+                                                            Debug.Log("Around our ranged Unit is an enemy Unit - we cannot attack");
+                                                            allowRangedAttack = false;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    //if we did not find any enemy Unit adjacent to our ranged Unit, then we can do ranged attack
+                                    if (allowRangedAttack)
+                                    {
+                                        Ranged ranged_unit = (Ranged)priorityQueue[0];
+                                        //Debug.Log("Ranged Unit will attack");
+                                        //Based on how far each unit is from another, we need to determine, if it should do full damage or quarter damage
+                                        //set row check range
+                                        int row_min = ranged_unit.getRowPos() - ranged_unit.getFullAttackRange();
+                                        if (row_min < 0) { row_min = 0; }
+                                        int row_max = ranged_unit.getRowPos() + ranged_unit.getFullAttackRange();
+                                        if (row_max >= terrainGenerator.getNumberOfRows()) { row_max = terrainGenerator.getNumberOfRows() - 1; }
+                                        //set column check range
+                                        int col_min = ranged_unit.getColPos() - ranged_unit.getFullAttackRange();
+                                        if (col_min < 0) { col_min = 0; }
+                                        int col_max = ranged_unit.getColPos() + ranged_unit.getFullAttackRange();
+                                        if (col_max >= terrainGenerator.getNumberOfColumns()) { col_max = terrainGenerator.getNumberOfColumns() - 1; }
+                                        //first set it so that full damage active is false; if we find the opposite Unit in searched field, then we will set it to true and break the search
+                                        ranged_unit.setFullDamageActive(false);
+                                        //check in area specified in range above
+                                        for (int i = row_min; i <= row_max; i++)
+                                        {
+                                            for (int j = col_min; j <= col_max; j++)
+                                            {
+                                                if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity() != null)
+                                                {
+                                                    if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.childCount > 0)
+                                                    {
+                                                        if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().transform.GetChild(0).tag == "Unit")
+                                                        {
+                                                            if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity() == clickedUnit.getModel())
+                                                            {
+                                                                Debug.Log("Full attack range allowed");
+                                                                ranged_unit.setFullDamageActive(true);
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        //now deal ranged damage and properly set variables for next Unit
+                                        ranged_unit.dealRangedDamage(clickedUnit);
+                                        removeDeadUnit(clickedUnit);
+                                        changeToNextUnit = true;
+                                        deleteMovementArea();
+                                    }
+                                }
+                                //MELEE ATTACK
                                 //check if Unit has an Indicator
-                                if (clickedUnit.getBattleIndicator() != null)
+                                if (clickedUnit.getBattleIndicator() != null && changeToNextUnit==false)
                                 {
                                     //check if this indicator is battle indicator
                                     if (clickedUnit.getBattleIndicator() == attackIndicator)
                                     {
                                         //Debug.Log("Unit can be attacked in melee!");
-                                        //priorityQueue[0].dealDamage(clickedUnit);
                                         targetUnit = clickedUnit;
                                         List<GameObject> enemyAdjacentMovementIndicators = new List<GameObject>();
                                         enemyAdjacentMovementIndicators = findAdjacentMovementIndicators(clickedUnit);
@@ -220,7 +303,6 @@ public class GameLogic : MonoBehaviour
                                         actionMode = 1;
                                     }
                                 }
-// UNDER CONSTRUCTION - ranged attack - check if selected Unit is ranged, check which damage to deal(quarter or full)
                             }
                         }
                     }

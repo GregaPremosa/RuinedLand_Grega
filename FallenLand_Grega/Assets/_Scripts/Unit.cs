@@ -138,9 +138,9 @@ abstract public class Unit
     {
         enemyUnit.applyEffects();
         applyEffects();
-        currentAttack = attack;
+        //currentAttack = attack;
         int dealDamage = currentAttack;
-        dealDamage = dealDamage * getCurrentCount(); //every actualy unit inside class Unit does damage
+        dealDamage = dealDamage * getCurrentCount(); //every actual unit inside class Unit does damage
         //Debug.Log("Damage pre reduction: " + dealDamage );
         //Debug.Log("Enemy (RAW) armour: " + enemyUnit.getCurrentArmour() );
         //Debug.Log("Enemy (CALCULATED) armour: " + Mathf.RoundToInt( dealDamage * Mathf.RoundToInt(enemyUnit.getCurrentArmour()) / 100));
@@ -164,14 +164,14 @@ abstract public class Unit
             else { Debug.Log("It should not come here"); damageCounter--; }
         }
         Debug.Log("Damage to take(post damage): " + damage + ", currentCount: " + currentCount + ", health: " + currentHealth);
-        //set current count into count
-        count = currentCount;
         //adjust health after battle - if count is >= 2 and currentHealth is ==0, change currentHealth to health and decrement count
         if ( currentCount >= 2 && currentHealth==0 )
         {
             currentHealth = health;
             currentCount--;
         }
+        //set current count into count
+        count = currentCount;
     }
 
     //iterate effects and apply to current stats
@@ -205,6 +205,7 @@ abstract public class Melee : Unit
     private int attackRange;
     public Melee() : base()
     {
+        setAttackMode(false);
         attackRange = 0;
     }
     //set
@@ -220,6 +221,7 @@ abstract public class Ranged : Unit
     private bool canRangedAttack; //if there is enemy melee unit in 1 block range of ranged unit, then ranged unit is prevented from performing a ranged attack.
     public Ranged() : base()
     {
+        setAttackMode(true);
         fullAttackRange = 0;
         canRangedAttack = true;
         fullDamageActive = false;
@@ -232,6 +234,32 @@ abstract public class Ranged : Unit
     public int getFullAttackRange() { return fullAttackRange; }
     public bool getFullDamageActive() { return fullDamageActive; }
     public bool getCanRangedAttack() { return canRangedAttack; }
+
+    //deal ranged damage - its alot like dealing melee damage, but also take in consideration how much damage should be deal(full attack range is true or false)
+    public void dealRangedDamage(Unit enemyUnit)
+    {
+        //melee
+        enemyUnit.applyEffects();
+        applyEffects();
+        //currentAttack = attack;
+        int dealDamage = getCurrentAttack();
+        dealDamage = dealDamage * getCurrentCount(); //every actual unit inside class Unit does damage
+        //if enemy is not in full attack range, then deal only a part of actual damage
+        if (getFullDamageActive() == false)
+        {
+            Debug.Log("This damage(full) is: " + Mathf.CeilToInt(dealDamage));
+            Debug.Log("This damage(quarter) is: " + Mathf.CeilToInt(dealDamage /4));
+            dealDamage = Mathf.CeilToInt(dealDamage /4);
+            if (dealDamage == 0) { dealDamage = 1; }
+        }
+        //Debug.Log("Damage pre reduction: " + dealDamage );
+        //Debug.Log("Enemy (RAW) armour: " + enemyUnit.getCurrentArmour() );
+        //Debug.Log("Enemy (CALCULATED) armour: " + Mathf.RoundToInt( dealDamage * Mathf.RoundToInt(enemyUnit.getCurrentArmour()) / 100));
+        dealDamage = dealDamage - Mathf.CeilToInt(dealDamage * enemyUnit.getCurrentArmour() / 100);
+        //Debug.Log("Damage post reduction: " + dealDamage);
+        enemyUnit.takeDamage(dealDamage);
+    }
+
 }
 //Warrior - Subclass of Melee
 public class Warrior : Melee

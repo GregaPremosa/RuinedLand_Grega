@@ -28,10 +28,13 @@ public class terrainGenerator : MonoBehaviour
         newBattleMode.setOccupyingEntities(obstacleObjectArray);
         //This is testing interaction for players - TESTING FACILITY, STATIC IS ONLY TEMPORARY
         Archer testArcher_1 = new Archer();
+        Archer testArcher_2 = new Archer();
         Warrior testWarrior_1 = new Warrior();
         Scout testScout_1 = new Scout();
         testArcher_1.setModel(arrayModels); //set model
         testArcher_1.setCount(10); //set some temporary count
+        testArcher_2.setModel(arrayModels);
+        testArcher_2.setCount(10);
         testWarrior_1.setModel(arrayModels);  //set model
         testWarrior_1.setCount(10); //set some temporary count
         testScout_1.setModel(arrayModels);  //set model
@@ -39,6 +42,7 @@ public class terrainGenerator : MonoBehaviour
         player1.addUnit(testArcher_1);
         player1.addUnit(testScout_1);
         player2.addUnit(testWarrior_1);
+        player2.addUnit(testArcher_2);
         gamelogic.setTerrainGenerator(newBattleMode);
         gamelogic.setPlayer1(player1);
         gamelogic.setPlayer2(player2);
