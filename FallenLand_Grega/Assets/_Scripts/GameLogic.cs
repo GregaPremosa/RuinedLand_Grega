@@ -12,6 +12,7 @@ public class GameLogic : MonoBehaviour
     private int actionMode;
     private bool generateNewMovArea;
     private Unit targetUnit;
+    private Unit currentUnit;
 
     //add in editor
     public GameObject movementIndicator;
@@ -143,6 +144,7 @@ public class GameLogic : MonoBehaviour
         {
             if (actionMode == 0)
             {
+                currentUnit = priorityQueue[0];
                 //check Unit passives - TEMPORARY CHECK
                 //for (int passiveCounter = 0; passiveCounter < priorityQueue[0].getPassives().Count; passiveCounter++)
                 //{
@@ -344,11 +346,56 @@ public class GameLogic : MonoBehaviour
         //If we implement UI buttons via button functions, we can set this block of code - this if - outside of button click
         if (changeToNextUnit == true)
         {
+            //check if unit is even alive - after getting damage for example
+            if (priorityQueue[0] != null)
+            {
+                //check if Unit is near a cover - if so, then give him cover effect bonus before changing to next Unit
+                int row_min = priorityQueue[0].getRowPos() - 1;
+                if (row_min < 0) { row_min = 0; }
+                int row_max = priorityQueue[0].getRowPos() + 1;
+                if (row_max >= terrainGenerator.getNumberOfRows()) { row_max = terrainGenerator.getNumberOfRows() - 1; }
+                int col_min = priorityQueue[0].getColPos() - 1;
+                if (col_min < 0) { col_min = 0; }
+                int col_max = priorityQueue[0].getColPos() + 1;
+                if (col_max >= terrainGenerator.getNumberOfColumns()) { col_max = terrainGenerator.getNumberOfColumns() - 1; }
+                bool addCoverEffect = false;
+                //Debug.Log("Cover borders: row-" + row_min + "," + row_max + ", col-" + col_min + "," + col_max );
+                for (int i = row_min; i <= row_max; i++)
+                {
+                    for (int j = col_min; j <= col_max; j++)
+                    {
+                        if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity() != null)
+                        {
+                            if (terrainGenerator.getMatrixField()[i][j].getOccupyingEntity().tag == "Obstacle")
+                            {
+                                addCoverEffect = true;
+                                break;
+                            }
+                        }
+                        if (addCoverEffect == true) { break; }
+                    }
+                }
+                // if addCoverEffect is true, then add nearCover effect.
+                if (addCoverEffect == true)
+                {
+                    Debug.Log("Unit is near a cover... add cover effect");
+                    priorityQueue[0].addEffect(new nearCover());
+                }
+            }
+            //change to next Unit and properly clean behind indicators(attack, defense, movement)
             priorityQueue.RemoveAt(0);
             deleteMovementArea();
             removeUnitIndicators();
             generateNewMovArea = true;
             changeToNextUnit = false;
+            //remove any dead units from priorityQueue objects
+            for (int i = 0; i < priorityQueue.Count; i++)
+            {
+                if (priorityQueue[i].getCurrentHealth() == 0 && priorityQueue[i].getCount() == 0)
+                {
+                    priorityQueue.RemoveAt(i);
+                }
+            }
         }
         if (player1.getAlive() && player2.getAlive() && priorityQueue.Count == 0)
         {
@@ -609,7 +656,7 @@ public class GameLogic : MonoBehaviour
     {
         if (selectedUnit.getCurrentCount() == 0)
         {
-            priorityQueue.Remove(selectedUnit);
+            //priorityQueue.Remove(selectedUnit);
             player1.checkUnitsStatus();
             player2.checkUnitsStatus();
             Destroy(selectedUnit.getModel());

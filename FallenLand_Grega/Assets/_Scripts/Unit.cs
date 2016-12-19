@@ -7,6 +7,9 @@ abstract public class Unit
     private int rowPos;
     private int colPos;
 
+    //set to which player this Unit belongs to
+    private Player playerOwner;
+
     private int health;
     private int currentHealth;
     private int armour;
@@ -43,6 +46,7 @@ abstract public class Unit
     {
         colPos = -1;
         rowPos = -1;
+        playerOwner = null;
         //changes while taking damage
         health = 0;
         currentHealth = 0;
@@ -70,6 +74,8 @@ abstract public class Unit
         //model = null;
     }
     //set
+    //player ownership
+    public void setPlayerOwner(Player newPlayerOwner) { playerOwner = newPlayerOwner; }
     //static values
     public void setHealth(int newHealth) { health = newHealth; }
     public void setArmour(int newArmour) { armour = newArmour; }
@@ -98,6 +104,8 @@ abstract public class Unit
     public void setBattleIndicator(GameObject newBattleIndicator) { battleIndicator = newBattleIndicator; }
     public void setSprite(Sprite newModelImage) { modelImage = newModelImage; }
     //get
+    //player ownership
+    public Player getPlayerOwner() { return playerOwner; }
     //static values
     public int getHealth() { return health; }
     public int getArmour() { return armour; }
@@ -177,6 +185,12 @@ abstract public class Unit
     //iterate effects and apply to current stats
     public void applyEffects()
     {
+        if (this != null)
+        {
+            PresenceMagic presenceMagicCheck = new PresenceMagic();
+            presenceMagicCheck.activate(this);
+        }
+
         for (int i = 0; i < passives.Count; i++)
         {
             //activate passive effect

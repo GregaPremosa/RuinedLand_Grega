@@ -31,6 +31,7 @@ public class terrainGenerator : MonoBehaviour
         Archer testArcher_2 = new Archer();
         Warrior testWarrior_1 = new Warrior();
         Scout testScout_1 = new Scout();
+        Chanter testChanter_1 = new Chanter();
         testArcher_1.setModel(arrayModels); //set model
         testArcher_1.setCount(10); //set some temporary count
         testArcher_2.setModel(arrayModels);
@@ -39,10 +40,18 @@ public class terrainGenerator : MonoBehaviour
         testWarrior_1.setCount(10); //set some temporary count
         testScout_1.setModel(arrayModels);  //set model
         testScout_1.setCount(10); //set some temporary count
+        testChanter_1.setModel(arrayModels);
+        testChanter_1.setCount(1);
         player1.addUnit(testArcher_1);
+        testArcher_1.setPlayerOwner(player1);
         player1.addUnit(testScout_1);
+        testScout_1.setPlayerOwner(player1);
         player2.addUnit(testWarrior_1);
+        testWarrior_1.setPlayerOwner(player2);
         player2.addUnit(testArcher_2);
+        testArcher_2.setPlayerOwner(player2);
+        player1.addUnit(testChanter_1);
+        testChanter_1.setPlayerOwner(player1);
         gamelogic.setTerrainGenerator(newBattleMode);
         gamelogic.setPlayer1(player1);
         gamelogic.setPlayer2(player2);

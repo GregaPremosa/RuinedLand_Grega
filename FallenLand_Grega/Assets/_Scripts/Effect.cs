@@ -145,28 +145,89 @@ public class empowerAlly : Effect
     }
 }
 
-
+//Unit is near a cover - defense increased by a small margin
+public class nearCover : Effect
+{
+    private float multiplier = 0.2f;
+    public nearCover() : base()
+    {
+        setEffectName("nearCover");
+        setIsDurationBased(true);
+        setDuration(1);
+    }
+    public override void activate(Unit unit)
+    {
+        //increase armour by 1 turn
+        unit.setCurrentArmour( unit.getCurrentArmour() + Mathf.RoundToInt(unit.getCurrentArmour()*multiplier) );
+    }
+}
 
     //PRESENCE EFFECTS
 //THIS CONCEPT SHALL BE ADDED LATER
 //abstract class, that separates each aura
-abstract public class PresenceMagic : Effect
-{
-}
-
-public class PresenceMage : Effect
+public class PresenceMagic : Effect
 {
     public override void activate(Unit unit)
     {
-        //naredi, da vsi ally-i imajo nekaj
+        //get player ownership of current Unit
+        Player playerOfUnit = null;
+        playerOfUnit = unit.getPlayerOwner();
+        for (int i = 0; i < playerOfUnit.getArrayUnits().Count; i++)
+        {
+            //if there is mage present, add presenceMage effect to this Unit
+            if (playerOfUnit.getArrayUnits()[i].getType() == 3) //check Unit class to see, which unit is what type (as integer) -> 3 is mage
+            {
+                unit.addEffect(new PresenceMage());
+            }
+            //if there is chanter present, add presenceChanter effect to this Unit
+            else if (playerOfUnit.getArrayUnits()[i].getType() == 4) //chanter is type 4
+            {
+                unit.addEffect(new PresenceChanter());
+            }
+        }
     }
 }
 
-public class PresenceChanter : Effect
+//if mage is present, then for every round he is still alive/present, heal allied Units (but he cannot ressurect them - increase count)
+public class PresenceMage : Effect
 {
+    public PresenceMage() : base()
+    {
+        setEffectName("PresenceMage");
+        setIsDurationBased(true);
+        setDuration(1);
+    }
     public override void activate(Unit unit)
     {
-        //naredi, da vsi ally-i imajo nekaj
+        //set multiplier value
+        float healingMultiplier = 0.5f;
+        //if mage is present, then for every round he is still alive/present, heal allied Units (but he cannot ressurect them - increase count)
+        int tryToSetNewHealth = unit.getCurrentHealth() + Mathf.CeilToInt(unit.getCurrentHealth()* healingMultiplier);
+        if (tryToSetNewHealth > unit.getHealth()) { tryToSetNewHealth = unit.getHealth(); }
+        unit.setCurrentHealth( tryToSetNewHealth );
+    }
+}
+
+//if chanter is present, increase defense, attack and movement speed
+public class PresenceChanter : Effect
+{
+    public PresenceChanter() : base()
+    {
+        setEffectName("PresenceChanter");
+        setIsDurationBased(true);
+        setDuration(1);
+    }
+    public override void activate(Unit unit)
+    {
+        //set multipliers
+        float attackMultiplier = 0.3f;
+        float armourMultiplier = 0.4f;
+        float speedMultiplier = 0.3f;
+        //increase numbers
+        unit.setCurrentAttack( unit.getCurrentAttack() + Mathf.CeilToInt(unit.getCurrentAttack()*attackMultiplier) );
+        unit.setCurrentArmour( unit.getCurrentArmour() + Mathf.CeilToInt(unit.getCurrentArmour()*armourMultiplier) );
+        unit.setCurrentMovement( unit.getCurrentMovement() + Mathf.CeilToInt(unit.getCurrentMovement()*speedMultiplier) );
+
     }
 }
 
